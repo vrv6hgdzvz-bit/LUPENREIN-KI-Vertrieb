@@ -1,0 +1,4 @@
+import {NextResponse} from 'next/server'
+import {createGmailDraft,gmailConfigured} from '@/lib/gmail'
+import {getMessage,updateMessage} from '@/lib/store'
+export async function POST(_:Request,{params}:{params:Promise<{id:string}>}){try{const {id}=await params;const m=await getMessage(id);if(!m)return NextResponse.json({error:'Nachricht nicht gefunden.'},{status:404});if(m.status!=='Freigegeben')return NextResponse.json({error:'Nachricht muss zuerst freigegeben werden.'},{status:409});if(!gmailConfigured)return NextResponse.json({error:'Gmail OAuth ist in der Web-App noch nicht konfiguriert.'},{status:409});const g=await createGmailDraft(m.to,m.subject,m.body);const u=await updateMessage(id,{provider:'gmail',gmailDraftId:g.draftId,gmailMessageId:g.messageId});return NextResponse.json({message:u,draftCreated:true})}catch(e:any){return NextResponse.json({error:e.message||'Gmail-Fehler'},{status:500})}}

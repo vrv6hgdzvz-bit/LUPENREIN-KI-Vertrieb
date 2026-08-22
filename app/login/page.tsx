@@ -1,0 +1,2 @@
+import LoginForm from '@/components/LoginForm'
+export default function Login(){return <main className="loginPage"><section className="loginBrand"><div className="loginLogo">L</div><span className="eyebrow">LUPENREIN SERVICE GMBH</span><h1>KI Vertrieb</h1><p>Leads finden, qualifizieren und strukturiert zu neuen Kunden entwickeln.</p></section><section className="loginCard"><span className="eyebrow">INTERNER ZUGANG</span><h2>Willkommen zurück</h2><p>Bitte melden Sie sich an.</p><LoginForm/><small>Demo-Zugang ist nur für die lokale Entwicklung gedacht.</small></section></main>}

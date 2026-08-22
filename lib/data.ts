@@ -1,0 +1,1 @@
+export const demoMetrics=[{label:'Neue Leads',value:'148',change:'+18 %'},{label:'Heiße Leads',value:'23',change:'+6 heute'},{label:'Antworten',value:'7',change:'4,7 % Quote'},{label:'Besichtigungen',value:'4',change:'+2 diese Woche'},{label:'Neue Kunden',value:'2',change:'diesen Monat'}]
