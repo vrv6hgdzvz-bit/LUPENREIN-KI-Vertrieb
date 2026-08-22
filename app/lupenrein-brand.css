@@ -46,6 +46,9 @@ body{background:linear-gradient(180deg,#FAFCFD 0%,#F3F6F8 100%)}
 .panelHead a,.back{color:#0B8CCD}
 .eyebrow{color:#149FE8}
 
+.offerDocBrand{align-content:start}
+.offerDocLogo{display:block;width:190px;max-width:52vw;height:auto;margin:0 0 10px;object-fit:contain}
+
 .letterheadPanel{grid-column:span 2;display:grid;gap:14px}
 .letterheadPanel .panelHead{margin-bottom:0}
 .letterheadPanel>p{margin:0;color:#6E7B83;line-height:1.55;font-size:13px;max-width:760px}
@@ -77,6 +80,7 @@ body{background:linear-gradient(180deg,#FAFCFD 0%,#F3F6F8 100%)}
 @media(max-width:760px){
   .brandLogo{width:150px}
   .content{padding:22px}
+  .offerDocLogo{width:155px;max-width:70vw}
   .loginBrandLogo{width:260px;max-width:80%}
   .loginBrand h1{font-size:42px}
   .loginBrand:after{display:none}
