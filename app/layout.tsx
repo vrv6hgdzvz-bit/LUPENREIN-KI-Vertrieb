@@ -1,4 +1,5 @@
 import './globals.css'
+import './lupenrein-brand.css'
 import {Sidebar} from '@/components/Sidebar'
 import {Topbar} from '@/components/Topbar'
 export const metadata={title:'LUPENREIN KI Vertrieb',description:'Interne KI-Vertriebssoftware'}

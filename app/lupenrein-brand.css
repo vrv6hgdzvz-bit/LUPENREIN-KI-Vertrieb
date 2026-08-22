@@ -1,0 +1,71 @@
+:root{
+  --lr-blue:#149FE8;
+  --lr-blue-light:#4EC3F5;
+  --lr-blue-dark:#087FBE;
+  --lr-navy:#0A3550;
+  --lr-navy-2:#0D4A6A;
+  --lr-silver:#B9BEC3;
+  --lr-silver-dark:#7E858B;
+  --lr-surface:#F7F9FB;
+  --lr-line:#DCE4E9;
+  --lr-white:#FFFFFF;
+}
+
+body{background:linear-gradient(180deg,#FAFCFD 0%,#F3F6F8 100%)}
+.sidebar{background:linear-gradient(180deg,#0B3550 0%,#0A4565 58%,#08334B 100%);box-shadow:18px 0 50px rgba(7,45,65,.10)}
+.brand{padding:0 4px 24px;gap:10px}
+.brandLogo{display:block;width:174px;max-width:100%;height:auto;filter:drop-shadow(0 4px 14px rgba(0,0,0,.10))}
+.brandText{display:none}
+.navItem{border:1px solid transparent;border-radius:11px;color:#E5F2F7;transition:.18s ease}
+.navItem:hover{background:rgba(78,195,245,.14);border-color:rgba(117,211,250,.22);transform:translateX(2px)}
+.navItem span:first-child{color:#72CCF4}
+.sidebarCard{background:linear-gradient(145deg,rgba(20,159,232,.16),rgba(255,255,255,.045));border-color:rgba(117,211,250,.30)}
+.sidebarCard .eyebrow{color:#73D0F7}
+.sidebarFoot{color:#C1D0D6}
+.topbar{height:84px;background:rgba(255,255,255,.97);border-bottom:1px solid #E0E7EB;box-shadow:0 4px 18px rgba(10,53,80,.035)}
+.topbar .eyebrow{color:var(--lr-blue);letter-spacing:1.8px}
+.topbar h1{color:var(--lr-navy);font-size:18px}
+.topBrandMark{width:34px;height:34px;border-radius:50%;border:2px solid var(--lr-blue);display:grid;place-items:center;color:var(--lr-blue);font-weight:900;margin-right:2px;background:#F7FCFF}
+.ghost,.notify{border-color:#DCE5EA;background:#FFFFFF;color:#61717A}
+.ghost:hover,.notify:hover{border-color:#A9DDF4;background:#F4FBFE;color:#0C7FB7}
+.avatar{background:linear-gradient(145deg,#0B3A56,#149FE8);box-shadow:0 4px 15px rgba(11,71,104,.16)}
+.content{padding:36px 38px}
+.hero h2,.pageHead h2,.detailHero h2,.panel h3,.metric strong{color:var(--lr-navy)}
+.primary{background:linear-gradient(135deg,#179FE8,#087FBE);box-shadow:0 8px 20px rgba(20,159,232,.20)}
+.primary:hover{background:linear-gradient(135deg,#35B4EE,#0B76AC)}
+.secondary{border-color:#DCE4E9;background:#FFFFFF;color:#355161}
+.metric,.panel{border-color:#DFE7EB;border-radius:16px;box-shadow:0 10px 30px rgba(20,55,70,.045)}
+.metric{position:relative;overflow:hidden}
+.metric:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(#149FE8,#74D1F8)}
+.score,.pill,.confidence,.roleBadge{background:#EAF7FD;color:#0B83BE}
+.detailHero{background:linear-gradient(135deg,#0B3550 0%,#0E5778 100%);box-shadow:0 16px 35px rgba(8,55,78,.15)}
+.bigScore{background:rgba(255,255,255,.08);border-color:rgba(150,219,248,.24)}
+.processOn{background:linear-gradient(135deg,#0B3B56,#0E668D)}
+.kanbanCol{background:#EFF4F7;border:1px solid #E1E8EC}
+.kanbanCard{border-radius:12px;box-shadow:0 5px 16px rgba(13,49,65,.04)}
+.panelHead a,.back{color:#0B8CCD}
+.eyebrow{color:#149FE8}
+
+.loginPage{background:radial-gradient(circle at 24% 22%,rgba(78,195,245,.20),transparent 31%),linear-gradient(135deg,#082F47 0%,#0B4B6B 58%,#0A3550 100%);grid-template-columns:1.18fr .82fr;overflow:hidden}
+.loginBrand{position:relative;padding:8vw 9vw}
+.loginBrand:after{content:"";position:absolute;right:-90px;top:12%;width:330px;height:330px;border-radius:50%;border:1px solid rgba(119,210,248,.18);box-shadow:0 0 0 50px rgba(119,210,248,.045),0 0 0 100px rgba(185,190,195,.025);pointer-events:none}
+.loginBrandLogo{width:min(470px,70%);height:auto;margin-bottom:34px;position:relative;z-index:1}
+.loginBrand h1{font-size:58px;letter-spacing:-1.8px;margin:8px 0 16px;color:#FFFFFF}
+.loginBrand p{max-width:570px;color:#D1E0E7;font-size:17px}
+.loginBrand .eyebrow{color:#72D1F7}
+.loginCard{border-radius:22px;padding:38px 38px 34px;border:1px solid #E3E8EB;background:linear-gradient(180deg,#FFFFFF 0%,#FBFCFD 100%);box-shadow:0 30px 80px rgba(5,37,54,.24)}
+.loginCard h2{font-size:31px;letter-spacing:-.7px;color:#0A3550}
+.loginCard>p,.loginCard>small{color:#6E7B83}
+.loginCard>small{display:block;margin-top:18px;line-height:1.5}
+.loginForm input{border-radius:10px;padding:13px 14px;border-color:#D7E1E6;outline:none;transition:.15s ease;background:#FFFFFF}
+.loginForm input:focus{border-color:#46BAEC;box-shadow:0 0 0 3px rgba(20,159,232,.11)}
+.loginForm label{font-weight:700;color:#536A75}
+.loginForm .primary{padding:13px 16px;border-radius:10px}
+
+@media(max-width:760px){
+  .brandLogo{width:150px}
+  .content{padding:22px}
+  .loginBrandLogo{width:260px;max-width:80%}
+  .loginBrand h1{font-size:42px}
+  .loginBrand:after{display:none}
+}
