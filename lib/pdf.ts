@@ -1,35 +1,106 @@
 import 'server-only'
+import {PDFDocument,PDFFont,PDFPage,StandardFonts,rgb} from 'pdf-lib'
 import type {Lead,Offer,SiteSurvey} from './types'
 import {COMPANY} from './company'
+import {getLetterhead,LetterheadAsset} from './letterhead'
 
-function ascii(s:string){return String(s||'').replace(/€/g,'EUR').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').replace(/[–—]/g,'-').replace(/[^\x00-\x7F]/g,'')}
-function esc(s:string){return ascii(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
-function wrap(s:string,max=88){const words=ascii(s).split(/\s+/);const out:string[]=[];let line='';for(const w of words){if((line+' '+w).trim().length>max){if(line)out.push(line);line=w}else line=(line+' '+w).trim()}if(line)out.push(line);return out}
+const A4:[number,number]=[595.28,841.89]
+const blue=rgb(20/255,159/255,232/255)
+const navy=rgb(10/255,53/255,80/255)
+const gray=rgb(90/255,105/255,114/255)
+const line=rgb(220/255,228/255,233/255)
+
+function safe(s:unknown){return String(s??'').replace(/€/g,'EUR').replace(/[–—]/g,'-').replace(/×/g,'x').replace(/[^\x20-\xFF]/g,'')}
 function money(n:number){return new Intl.NumberFormat('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' EUR'}
+function date(v:string){const d=new Date(v);return Number.isNaN(d.getTime())?v:d.toLocaleDateString('de-DE')}
+function wrap(text:string,font:PDFFont,size:number,maxWidth:number){
+ const words=safe(text).split(/\s+/).filter(Boolean);const rows:string[]=[];let current=''
+ for(const word of words){const test=current?`${current} ${word}`:word;if(font.widthOfTextAtSize(test,size)<=maxWidth)current=test;else{if(current)rows.push(current);current=word}}
+ if(current)rows.push(current);return rows.length?rows:['']
+}
+function text(page:PDFPage,value:string,x:number,y:number,font:PDFFont,size=9,color=navy){page.drawText(safe(value),{x,y,font,size,color})}
 
-export function buildOfferPdf(offer:Offer,lead:Lead,survey?:SiteSurvey){
- const lines:string[]=[COMPANY.name,COMPANY.tagline,`${COMPANY.street} · ${COMPANY.zip} ${COMPANY.city}`,`Tel. ${COMPANY.phone} · ${COMPANY.email}`,'',`ANGEBOT ${offer.number}`,'',`An: ${lead.company}`]
- if(lead.contact)lines.push(`z. Hd. ${lead.contact}`)
- lines.push(lead.address||lead.city,'',offer.title,'')
- if(survey)lines.push(`Objekt: ${survey.objectName} · ${survey.address}`,`${survey.areaSqm} m2 · ${survey.frequencyPerWeek}x/Woche · Boden: ${survey.floorType}`,'')
- lines.push('Leistungen:')
- offer.items.forEach((i,idx)=>{lines.push(`${idx+1}. ${i.service} | ${i.quantity} ${i.unit} | ${money(i.unitPrice)} | ${i.billing}`);if(i.description)lines.push(...wrap('   '+i.description,84))})
- lines.push('')
- if(offer.subtotalOneTime>0){const vat=offer.subtotalOneTime*offer.vatRate/100;lines.push(`Einmalig netto: ${money(offer.subtotalOneTime)}`,`MwSt. ${offer.vatRate}%: ${money(vat)}`,`Einmalig brutto: ${money(offer.subtotalOneTime+vat)}`,'')}
- if(offer.subtotalMonthly>0){const vat=offer.subtotalMonthly*offer.vatRate/100;lines.push(`Monatlich netto: ${money(offer.subtotalMonthly)}`,`MwSt. ${offer.vatRate}%: ${money(vat)}`,`Monatlich brutto: ${money(offer.subtotalMonthly+vat)}`,'')}
- lines.push(`Gueltig bis: ${new Date(offer.validUntil).toLocaleDateString('de-DE')}`)
- if(offer.notes)lines.push('',...wrap(offer.notes,88))
- lines.push('',`USt-IdNr.: ${COMPANY.vatId} · ${COMPANY.register} · ${COMPANY.court}`)
- const pages:string[][]=[];for(let i=0;i<lines.length;i+=48)pages.push(lines.slice(i,i+48))
- const objects:string[]=[];const pageIds:number[]=[];let nextId=4
- for(let p=0;p<pages.length;p++){pageIds.push(nextId);nextId+=2}
- const fontId=nextId
- objects[1]='<< /Type /Catalog /Pages 2 0 R >>'
- objects[2]=`<< /Type /Pages /Kids [${pageIds.map(id=>`${id} 0 R`).join(' ')}] /Count ${pageIds.length} >>`
- pages.forEach((pg,idx)=>{const pageId=pageIds[idx],contentId=pageId+1;const cmds=['BT','/F1 10 Tf','40 800 Td'];for(const line of pg)cmds.push(`(${esc(line)}) Tj`,'0 -15 Td');cmds.push('ET');const stream=cmds.join('\n');objects[pageId]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${contentId} 0 R >>`;objects[contentId]=`<< /Length ${Buffer.byteLength(stream,'ascii')} >>\nstream\n${stream}\nendstream`})
- objects[fontId]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
- let pdf='%PDF-1.4\n';const offsets:number[]=[0]
- for(let i=1;i<objects.length;i++){if(!objects[i])continue;offsets[i]=Buffer.byteLength(pdf,'ascii');pdf+=`${i} 0 obj\n${objects[i]}\nendobj\n`}
- const xref=Buffer.byteLength(pdf,'ascii');pdf+=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;for(let i=1;i<objects.length;i++)pdf+=`${String(offsets[i]||0).padStart(10,'0')} 00000 n \n`;pdf+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`
- return Buffer.from(pdf,'ascii')
+async function makePage(doc:PDFDocument,asset:LetterheadAsset|null,templateDoc:PDFDocument|null,image:any|null){
+ if(asset?.mime==='application/pdf'&&templateDoc){const [copied]=await doc.copyPages(templateDoc,[0]);return doc.addPage(copied)}
+ const page=doc.addPage(A4)
+ if(image)page.drawImage(image,{x:0,y:0,width:page.getWidth(),height:page.getHeight()})
+ return page
+}
+
+export async function buildOfferPdf(offer:Offer,lead:Lead,survey?:SiteSurvey){
+ const asset=await getLetterhead().catch(()=>null)
+ const doc=await PDFDocument.create()
+ const regular=await doc.embedFont(StandardFonts.Helvetica)
+ const bold=await doc.embedFont(StandardFonts.HelveticaBold)
+ let templateDoc:PDFDocument|null=null;let backgroundImage:any|null=null
+ try{
+  if(asset?.mime==='application/pdf')templateDoc=await PDFDocument.load(asset.bytes,{ignoreEncryption:true})
+  else if(asset?.mime==='image/png')backgroundImage=await doc.embedPng(asset.bytes)
+  else if(asset?.mime==='image/jpeg')backgroundImage=await doc.embedJpg(asset.bytes)
+ }catch{}
+ const activeAsset=(templateDoc||backgroundImage)?asset:null
+ let page=await makePage(doc,activeAsset,templateDoc,backgroundImage)
+ let y=655
+ const bottom=125
+ const left=62
+ const right=505
+ const contentWidth=right-left
+
+ function fallbackBrand(){if(activeAsset)return;text(page,COMPANY.name,left,785,bold,17,blue);text(page,COMPANY.tagline,left,766,regular,9,gray);page.drawLine({start:{x:left,y:752},end:{x:right,y:752},thickness:1,color:line});text(page,`${COMPANY.street} · ${COMPANY.zip} ${COMPANY.city} · ${COMPANY.phone} · ${COMPANY.email}`,left,58,regular,7,gray)}
+ fallbackBrand()
+
+ async function newPage(){page=await makePage(doc,activeAsset,templateDoc,backgroundImage);fallbackBrand();y=665}
+ async function ensure(height:number){if(y-height<bottom)await newPage()}
+ function rowRule(pos:number){page.drawLine({start:{x:left,y:pos},end:{x:right,y:pos},thickness:.6,color:line})}
+
+ text(page,`${COMPANY.name} · ${COMPANY.street} · ${COMPANY.zip} ${COMPANY.city}`,left,y,regular,7,gray);y-=24
+ text(page,lead.company,left,y,bold,10,navy);y-=14
+ if(lead.contact){text(page,`z. Hd. ${lead.contact}`,left,y,regular,9,navy);y-=13}
+ const address=lead.address||lead.city;if(address){for(const r of wrap(address,regular,9,250)){text(page,r,left,y,regular,9,navy);y-=12}}
+ const metaX=365
+ text(page,'ANGEBOT',metaX,655,bold,8,blue);text(page,offer.number,metaX,638,bold,12,navy)
+ text(page,'Erstellt',metaX,614,regular,7,gray);text(page,date(offer.createdAt),metaX+55,614,bold,8,navy)
+ text(page,'Gültig bis',metaX,600,regular,7,gray);text(page,date(offer.validUntil),metaX+55,600,bold,8,navy)
+ y=Math.min(y-18,552)
+ text(page,offer.title,left,y,bold,16,navy);y-=24
+
+ if(survey){
+  await ensure(52);page.drawRectangle({x:left,y:y-38,width:contentWidth,height:42,color:rgb(.965,.98,.988),borderColor:line,borderWidth:.7})
+  text(page,'OBJEKT / KALKULATIONSGRUNDLAGE',left+10,y-8,bold,7,blue)
+  text(page,`${survey.objectName} · ${survey.address}`,left+10,y-22,bold,8,navy)
+  text(page,`${survey.areaSqm.toLocaleString('de-DE')} m² · ${survey.frequencyPerWeek}x/Woche · ${survey.floorType}`,left+10,y-34,regular,8,gray);y-=54
+ }
+
+ async function tableHeader(){await ensure(28);text(page,'LEISTUNG',left,y,bold,7,gray);text(page,'MENGE',335,y,bold,7,gray);text(page,'EINZELPREIS',390,y,bold,7,gray);text(page,'GESAMT',465,y,bold,7,gray);y-=8;rowRule(y);y-=12}
+ await tableHeader()
+ for(const item of offer.items){
+  const descRows=item.description?wrap(item.description,regular,7.5,250):[]
+  const rowHeight=Math.max(34,24+descRows.slice(0,3).length*10)
+  if(y-rowHeight<bottom){await newPage();text(page,`Angebot ${offer.number} · ${lead.company}`,left,y,bold,8,gray);y-=26;await tableHeader()}
+  text(page,item.service,left,y,bold,8.5,navy)
+  descRows.slice(0,3).forEach((r,i)=>text(page,r,left,y-12-i*10,regular,7.5,gray))
+  text(page,`${item.quantity} ${item.unit}`,335,y,regular,8,navy)
+  text(page,money(item.unitPrice),390,y,regular,8,navy)
+  text(page,money(item.quantity*item.unitPrice),465,y,bold,8,navy)
+  y-=rowHeight;rowRule(y+7);y-=7
+ }
+ y-=8
+
+ const totals:{label:string;value:string;strong?:boolean}[]=[]
+ if(offer.subtotalOneTime>0){const vat=offer.subtotalOneTime*offer.vatRate/100;totals.push({label:'Einmalig netto',value:money(offer.subtotalOneTime)},{label:`MwSt. ${offer.vatRate}%`,value:money(vat)},{label:'Einmalig brutto',value:money(offer.subtotalOneTime+vat),strong:true})}
+ if(offer.subtotalMonthly>0){const vat=offer.subtotalMonthly*offer.vatRate/100;totals.push({label:'Monatlich netto',value:money(offer.subtotalMonthly)},{label:`MwSt. ${offer.vatRate}%`,value:money(vat)},{label:'Monatlich brutto',value:money(offer.subtotalMonthly+vat),strong:true})}
+ await ensure(totals.length*15+28)
+ for(const t of totals){const f=t.strong?bold:regular;text(page,t.label,340,y,f,t.strong?9:8,t.strong?navy:gray);text(page,t.value,455,y,f,t.strong?9:8,t.strong?navy:gray);y-=15;if(t.strong)y-=6}
+
+ if(offer.notes){
+  const notes=wrap(offer.notes,regular,8,contentWidth)
+  await ensure(30+notes.length*11);y-=8;text(page,'HINWEISE & BEDINGUNGEN',left,y,bold,7,blue);y-=15
+  for(const r of notes){text(page,r,left,y,regular,8,gray);y-=11}
+ }
+ await ensure(60);y-=18
+ text(page,'Freundliche Grüße',left,y,regular,9,navy);y-=16;text(page,COMPANY.name,left,y,bold,9,navy)
+
+ if(!activeAsset){text(page,`USt-IdNr. ${COMPANY.vatId} · ${COMPANY.register} · ${COMPANY.court}`,left,45,regular,7,gray)}
+ doc.setTitle(`Angebot ${offer.number}`);doc.setAuthor(COMPANY.name);doc.setCreator('LUPENREIN KI Vertrieb')
+ return Buffer.from(await doc.save())
 }
