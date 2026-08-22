@@ -1,4 +1,6 @@
 import 'server-only'
+import {readFile} from 'node:fs/promises'
+import path from 'node:path'
 import {PDFDocument,PDFFont,PDFPage,StandardFonts,rgb} from 'pdf-lib'
 import type {Lead,Offer,SiteSurvey} from './types'
 import {COMPANY} from './company'
@@ -32,13 +34,16 @@ export async function buildOfferPdf(offer:Offer,lead:Lead,survey?:SiteSurvey){
  const doc=await PDFDocument.create()
  const regular=await doc.embedFont(StandardFonts.Helvetica)
  const bold=await doc.embedFont(StandardFonts.HelveticaBold)
- let templateDoc:PDFDocument|null=null;let backgroundImage:any|null=null
+ let templateDoc:PDFDocument|null=null;let backgroundImage:any|null=null;let standardLogo:any|null=null
  try{
   if(asset?.mime==='application/pdf')templateDoc=await PDFDocument.load(asset.bytes,{ignoreEncryption:true})
   else if(asset?.mime==='image/png')backgroundImage=await doc.embedPng(asset.bytes)
   else if(asset?.mime==='image/jpeg')backgroundImage=await doc.embedJpg(asset.bytes)
  }catch{}
  const activeAsset=(templateDoc||backgroundImage)?asset:null
+ if(!activeAsset){
+  try{standardLogo=await doc.embedPng(await readFile(path.join(process.cwd(),'public','lupenrein-logo.png')))}catch{}
+ }
  let page=await makePage(doc,activeAsset,templateDoc,backgroundImage)
  let y=655
  const bottom=125
@@ -46,7 +51,22 @@ export async function buildOfferPdf(offer:Offer,lead:Lead,survey?:SiteSurvey){
  const right=505
  const contentWidth=right-left
 
- function fallbackBrand(){if(activeAsset)return;text(page,COMPANY.name,left,785,bold,17,blue);text(page,COMPANY.tagline,left,766,regular,9,gray);page.drawLine({start:{x:left,y:752},end:{x:right,y:752},thickness:1,color:line});text(page,`${COMPANY.street} · ${COMPANY.zip} ${COMPANY.city} · ${COMPANY.phone} · ${COMPANY.email}`,left,58,regular,7,gray)}
+ function fallbackBrand(){
+  if(activeAsset)return
+  if(standardLogo){
+   const maxW=150,maxH=70;const scale=Math.min(maxW/standardLogo.width,maxH/standardLogo.height)
+   page.drawImage(standardLogo,{x:left,y:755,width:standardLogo.width*scale,height:standardLogo.height*scale})
+   text(page,COMPANY.tagline,235,790,regular,8.5,gray)
+   text(page,`${COMPANY.street} · ${COMPANY.zip} ${COMPANY.city}`,235,776,regular,8,gray)
+   text(page,`${COMPANY.phone} · ${COMPANY.email}`,235,762,regular,8,gray)
+  }else{
+   text(page,COMPANY.name,left,785,bold,17,blue)
+   text(page,COMPANY.tagline,left,766,regular,9,gray)
+   text(page,`${COMPANY.street} · ${COMPANY.zip} ${COMPANY.city}`,left,752,regular,8,gray)
+  }
+  page.drawLine({start:{x:left,y:738},end:{x:right,y:738},thickness:1,color:line})
+  text(page,`${COMPANY.name} · ${COMPANY.street} · ${COMPANY.zip} ${COMPANY.city} · ${COMPANY.phone} · ${COMPANY.email}`,left,58,regular,7,gray)
+ }
  fallbackBrand()
 
  async function newPage(){page=await makePage(doc,activeAsset,templateDoc,backgroundImage);fallbackBrand();y=665}
