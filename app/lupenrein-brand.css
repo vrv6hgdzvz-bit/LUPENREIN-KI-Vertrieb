@@ -46,6 +46,18 @@ body{background:linear-gradient(180deg,#FAFCFD 0%,#F3F6F8 100%)}
 .panelHead a,.back{color:#0B8CCD}
 .eyebrow{color:#149FE8}
 
+.letterheadPanel{grid-column:span 2;display:grid;gap:14px}
+.letterheadPanel .panelHead{margin-bottom:0}
+.letterheadPanel>p{margin:0;color:#6E7B83;line-height:1.55;font-size:13px;max-width:760px}
+.letterheadActive{font-size:10px;letter-spacing:1px;font-weight:800;color:#087FBE;background:#EAF7FD;border:1px solid #CBEAF8;border-radius:999px;padding:7px 10px}
+.letterheadStatus{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#F2FAFD;border:1px solid #D7EDF7;border-radius:10px;padding:12px 14px;color:#0A3550}
+.letterheadStatus span,.letterheadSelected{color:#71828A;font-size:11px}
+.letterheadFile{display:grid!important;gap:8px!important;color:#526A75!important;font-weight:700}
+.letterheadFile input{padding:10px!important;background:#FBFDFE!important}
+.letterheadActions{display:flex;gap:10px;align-items:center}
+.letterheadActions .primary,.letterheadActions .secondary{padding:10px 14px}
+.letterheadActions button:disabled{opacity:.55;cursor:not-allowed}
+
 .loginPage{background:radial-gradient(circle at 24% 22%,rgba(78,195,245,.20),transparent 31%),linear-gradient(135deg,#082F47 0%,#0B4B6B 58%,#0A3550 100%);grid-template-columns:1.18fr .82fr;overflow:hidden}
 .loginBrand{position:relative;padding:8vw 9vw}
 .loginBrand:after{content:"";position:absolute;right:-90px;top:12%;width:330px;height:330px;border-radius:50%;border:1px solid rgba(119,210,248,.18);box-shadow:0 0 0 50px rgba(119,210,248,.045),0 0 0 100px rgba(185,190,195,.025);pointer-events:none}
@@ -68,4 +80,6 @@ body{background:linear-gradient(180deg,#FAFCFD 0%,#F3F6F8 100%)}
   .loginBrandLogo{width:260px;max-width:80%}
   .loginBrand h1{font-size:42px}
   .loginBrand:after{display:none}
+  .letterheadPanel{grid-column:auto}
+  .letterheadStatus,.letterheadActions{align-items:flex-start;flex-direction:column}
 }
