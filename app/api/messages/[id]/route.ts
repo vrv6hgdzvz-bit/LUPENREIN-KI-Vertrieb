@@ -1,0 +1,3 @@
+import {NextResponse} from 'next/server'
+import {getMessage,updateMessage} from '@/lib/store'
+export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){const {id}=await params;const m=await getMessage(id);if(!m)return NextResponse.json({error:'Nachricht nicht gefunden.'},{status:404});if(m.status!=='Entwurf')return NextResponse.json({error:'Nur Entwürfe können bearbeitet werden.'},{status:409});const body=await req.json();const u=await updateMessage(id,{subject:String(body.subject??m.subject),body:String(body.body??m.body),to:String(body.to??m.to)});return NextResponse.json({message:u})}
