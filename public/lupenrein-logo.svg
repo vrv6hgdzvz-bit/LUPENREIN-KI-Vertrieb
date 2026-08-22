@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 180" role="img" aria-labelledby="title desc">
+  <title id="title">LUPENREIN Service GmbH</title>
+  <desc id="desc">Lupenrein wordmark with magnifying glass symbol</desc>
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#31b7ff"/>
+      <stop offset="1" stop-color="#138fd5"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(18 18)">
+    <circle cx="64" cy="74" r="36" fill="none" stroke="#aab1b6" stroke-width="15"/>
+    <circle cx="64" cy="74" r="13" fill="#0f1d25"/>
+    <path d="M90 100 L128 144" stroke="#aab1b6" stroke-width="15" stroke-linecap="round"/>
+    <g fill="url(#blue)">
+      <circle cx="63" cy="17" r="10"/><circle cx="80" cy="42" r="10"/><circle cx="81" cy="67" r="10"/>
+      <circle cx="44" cy="113" r="10"/><circle cx="41" cy="139" r="10"/><circle cx="54" cy="158" r="10"/>
+    </g>
+  </g>
+  <text x="165" y="102" font-family="Arial, Helvetica, sans-serif" font-size="78" font-weight="800" letter-spacing="-4" fill="url(#blue)">LUPENREIN</text>
+  <text x="170" y="151" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="300" letter-spacing="8" fill="#90969a">SERVICE GmbH</text>
+</svg>
