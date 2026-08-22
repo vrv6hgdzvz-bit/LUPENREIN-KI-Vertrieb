@@ -5,7 +5,7 @@ const items = [
 ]
 export function Sidebar(){
   return <aside className="sidebar">
-    <div className="brand"><div className="brandMark">L</div><div><strong>LUPENREIN</strong><span>KI Vertrieb</span></div></div>
+    <div className="brand"><img className="brandLogo" src="/lupenrein-logo.svg" alt="LUPENREIN Service GmbH"/><div className="brandText"><strong>LUPENREIN</strong><span>KI Vertrieb</span></div></div>
     <nav>{items.map(([icon,label,href])=><Link className="navItem" href={href} key={href}><span>{icon}</span>{label}</Link>)}</nav>
     <div className="sidebarCard"><span className="eyebrow">EINSATZGEBIET</span><strong>Berlin + 50 km</strong><small>Lead-Suche aktiv</small></div>
     <div className="sidebarFoot">LUPENREIN Service GmbH<br/><span>Interne Vertriebssoftware</span></div>
