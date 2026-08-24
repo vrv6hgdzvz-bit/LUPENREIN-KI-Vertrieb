@@ -120,7 +120,20 @@ export async function buildOfferPdf(offer:Offer,lead:Lead,survey?:SiteSurvey){
  await ensure(60);y-=18
  text(page,'Freundliche Grüße',left,y,regular,9,navy);y-=16;text(page,COMPANY.name,left,y,bold,9,navy)
 
+ const lvItems=offer.serviceSpecification?.items||[]
+ if(lvItems.length){
+  await newPage();text(page,'LEISTUNGSVERZEICHNIS (LV)',left,y,bold,16,navy);y-=20;text(page,`Anlage zu Angebot ${offer.number} · ${lead.company}`,left,y,regular,8,gray);y-=25
+  const groups=[...new Set(lvItems.map(x=>x.groupId))]
+  for(const groupId of groups){
+   const entries=lvItems.filter(x=>x.groupId===groupId);if(y-35-entries.length*38<bottom){await newPage();text(page,'LEISTUNGSVERZEICHNIS (FORTSETZUNG)',left,y,bold,12,navy);y-=28}
+   text(page,entries[0].groupLabel,left,y,bold,11,blue);y-=12;rowRule(y);y-=15
+   for(const entry of entries){if(y-34<bottom){await newPage();text(page,entries[0].groupLabel,left,y,bold,11,blue);y-=22}const frequency=entry.frequency.custom||entry.frequency.preset;text(page,entry.activityLabel,left,y,bold,8.5,navy);text(page,frequency,410,y,bold,8,navy);y-=11;for(const row of wrap(entry.shortText,regular,7.5,330).slice(0,2)){text(page,row,left,y,regular,7.5,gray);y-=9}y-=8;rowRule(y+4)}y-=14
+  }
+  await ensure(42);text(page,'Ausführungshinweis',left,y,bold,8,blue);y-=13;for(const row of wrap('Die angebotenen Leistungen erfolgen gemäß Absprache und beigefügtem Leistungsverzeichnis (LV).',regular,8,contentWidth)){text(page,row,left,y,regular,8,gray);y-=11}
+ }
+
  if(!activeAsset){text(page,`USt-IdNr. ${COMPANY.vatId} · ${COMPANY.register} · ${COMPANY.court}`,left,45,regular,7,gray)}
  doc.setTitle(`Angebot ${offer.number}`);doc.setAuthor(COMPANY.name);doc.setCreator('LUPENREIN KI Vertrieb')
  return Buffer.from(await doc.save())
 }
+
