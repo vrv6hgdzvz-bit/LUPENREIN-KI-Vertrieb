@@ -1,0 +1,132 @@
+[
+  {
+    "id": "70a60254-178c-494c-b802-54639ea91523",
+    "publicToken": "aa102826c81453248cc0737d521434445eab0dc5",
+    "offerToken": "a5c458af6d87fa3ab78ac24d8c8fe160d14fd5c97e493f44",
+    "status": "accepted",
+    "answers": {
+      "company": "Musterbüro GmbH",
+      "contactName": "",
+      "email": "test@example.invalid",
+      "phone": "030 000000",
+      "objectType": "Büro",
+      "address": "Musterstraße 1, 10115 Berlin",
+      "areaSqm": 850,
+      "serviceTypes": [
+        "Unterhaltsreinigung"
+      ],
+      "weekdays": [
+        "Montag",
+        "Mittwoch"
+      ],
+      "frequency": "2× pro Woche",
+      "timeWindow": "Werktags ab 18:00 Uhr",
+      "floorTypes": [
+        "Teppich"
+      ],
+      "areas": [
+        "Büros"
+      ],
+      "restrooms": 4,
+      "kitchens": 2,
+      "glassAreaSqm": 0,
+      "staircases": 0,
+      "elevators": 0,
+      "specialAreas": "",
+      "soilLevel": "normal",
+      "materials": "LUPENREIN",
+      "access": "",
+      "specialRequests": "",
+      "desiredStart": ""
+    },
+    "lvItems": [
+      {
+        "id": "lv-1",
+        "groupId": "allgemein",
+        "groupLabel": "Allgemeine Bereiche",
+        "groupIcon": "▦",
+        "activityId": "a-1",
+        "activityLabel": "Oberflächen und Mobiliar reinigen",
+        "shortText": "Freie Oberflächen, Mobiliar und Kontaktpunkte in Büros reinigen.",
+        "frequency": {
+          "preset": "2× pro Woche",
+          "custom": ""
+        }
+      },
+      {
+        "id": "lv-2",
+        "groupId": "boden",
+        "groupLabel": "Bodenreinigung",
+        "groupIcon": "▰",
+        "activityId": "a-2",
+        "activityLabel": "Böden reinigen",
+        "shortText": "Teppich gemäß Materialanforderung saugen, wischen bzw. pflegen.",
+        "frequency": {
+          "preset": "2× pro Woche",
+          "custom": ""
+        }
+      },
+      {
+        "id": "lv-3",
+        "groupId": "sanitaer",
+        "groupLabel": "Sanitär",
+        "groupIcon": "◫",
+        "activityId": "a-3",
+        "activityLabel": "Sanitärbereiche reinigen",
+        "shortText": "4 Sanitärbereich(e) hygienisch reinigen, Verbrauchsmaterial kontrollieren und Abfall entsorgen.",
+        "frequency": {
+          "preset": "2× pro Woche",
+          "custom": ""
+        }
+      },
+      {
+        "id": "lv-4",
+        "groupId": "kueche",
+        "groupLabel": "Küche / Teeküche",
+        "groupIcon": "⌂",
+        "activityId": "a-4",
+        "activityLabel": "Küchenbereiche reinigen",
+        "shortText": "2 Küche(n)/Teeküche(n), Arbeitsflächen, Spülen und erreichbare Geräteaußenflächen reinigen.",
+        "frequency": {
+          "preset": "2× pro Woche",
+          "custom": ""
+        }
+      }
+    ],
+    "offerItems": [
+      {
+        "id": "monthly",
+        "service": "Unterhaltsreinigung",
+        "description": "Leistungen gemäß beigefügtem LV",
+        "quantity": 1,
+        "unit": "Monatspauschale",
+        "unitPrice": 2206.66,
+        "billing": "monatlich"
+      }
+    ],
+    "pricing": {
+      "reviewMode": "instant",
+      "monthlyNet": 2206.66,
+      "oneTimeNet": 0,
+      "internal": {
+        "hourlyRate": 39.5,
+        "productivity": 180,
+        "hoursPerVisit": 4.72,
+        "materialMonthly": 38.25,
+        "travelSetupMonthly": 155.88,
+        "surcharges": 0,
+        "margin": 0.18
+      }
+    },
+    "offerNumber": "LR-2026-533273",
+    "validUntil": "2026-09-07",
+    "createdAt": "2026-08-24T09:25:33.272Z",
+    "updatedAt": "2026-08-24T09:25:43.862Z",
+    "acceptedAt": "2026-08-24T09:25:43.862Z",
+    "acceptance": {
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+      "timestamp": "2026-08-24T09:25:43.862Z"
+    }
+  }
+]
