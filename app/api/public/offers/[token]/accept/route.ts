@@ -1,0 +1,3 @@
+import {headers} from 'next/headers';import {NextResponse} from 'next/server';import {acceptSelfServiceOffer} from '@/lib/selfService'
+export async function POST(_:Request,{params}:{params:Promise<{token:string}>}){try{const {token}=await params,h=await headers();const ip=(h.get('x-forwarded-for')||h.get('x-real-ip')||'unbekannt').split(',')[0].trim(),userAgent=h.get('user-agent')||'unbekannt';const row=await acceptSelfServiceOffer(token,{ip,userAgent});if(!row)return NextResponse.json({error:'Angebot ist nicht verfügbar oder bereits bearbeitet.'},{status:409});return NextResponse.json({accepted:true,acceptedAt:row.acceptedAt})}catch(e:any){return NextResponse.json({error:e.message||'Annahme konnte nicht gespeichert werden.'},{status:500})}}
+
