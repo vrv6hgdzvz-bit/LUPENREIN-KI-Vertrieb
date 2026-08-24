@@ -7,3 +7,9 @@ export async function adminRest(path:string,init:RequestInit={}){
  const headers=new Headers(init.headers);headers.set('apikey',key());headers.set('Authorization',`Bearer ${key()}`);headers.set('Content-Type','application/json')
  return fetch(`${base()}/rest/v1/${path}`,{...init,headers,cache:'no-store'})
 }
+export async function adminStorage(path:string,init:RequestInit={}){
+ if(!adminConfigured)throw new Error('Supabase Secret/Service Role ist nicht konfiguriert.')
+ const headers=new Headers(init.headers);headers.set('apikey',key());headers.set('Authorization',`Bearer ${key()}`)
+ return fetch(`${base()}/storage/v1/${path}`,{...init,headers,cache:'no-store'})
+}
+
