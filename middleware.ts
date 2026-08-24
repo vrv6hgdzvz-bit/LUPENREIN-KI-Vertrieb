@@ -1,6 +1,6 @@
 import {NextRequest,NextResponse} from 'next/server'
 
-function publicPath(pathname:string){return pathname==='/login'||pathname.startsWith('/api/auth/')||pathname==='/api/health'||pathname.startsWith('/_next/')||pathname==='/favicon.ico'}
+function publicPath(pathname:string){return pathname==='/login'||pathname==='/anfrage'||pathname.startsWith('/angebot/')||pathname.startsWith('/api/public/')||pathname.startsWith('/api/auth/')||pathname==='/api/health'||pathname.startsWith('/_next/')||pathname==='/favicon.ico'}
 function jwtExpiresSoon(token:string){try{const part=token.split('.')[1];const json=JSON.parse(atob(part.replace(/-/g,'+').replace(/_/g,'/')));return !json.exp||Number(json.exp)*1000<Date.now()+60_000}catch{return true}}
 function unauth(req:NextRequest){if(req.nextUrl.pathname.startsWith('/api/'))return NextResponse.json({error:'Nicht angemeldet.'},{status:401});const url=req.nextUrl.clone();url.pathname='/login';url.searchParams.set('next',req.nextUrl.pathname);return NextResponse.redirect(url)}
 
@@ -19,3 +19,4 @@ export async function middleware(req:NextRequest){
  return unauth(req)
 }
 export const config={matcher:['/((?!.*\\..*).*)']}
+
