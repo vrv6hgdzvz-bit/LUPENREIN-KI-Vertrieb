@@ -26,7 +26,7 @@ export type Lead = {
   phone: string
   website?: string
   address?: string
-  source?: 'Manuell'|'Google Places'|'Demo Finder'
+  source?: 'Manuell'|'Google Places'|'Demo Finder'|'Self-Service'
   sourceId?: string
   reason: string
   potential: 'hoch'|'mittel'|'niedrig'
