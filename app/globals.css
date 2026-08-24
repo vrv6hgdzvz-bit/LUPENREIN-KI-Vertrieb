@@ -40,5 +40,6 @@
 @media(max-width:700px){.publicShell{padding:12px}.publicCard{padding:22px;border-radius:14px}.publicBrand img{width:145px}.formGrid,.formGrid.compact,.choiceGrid{grid-template-columns:1fr}.offerHero{margin:0 -22px 24px;padding:30px 22px}.lvPublic{grid-template-columns:30px 1fr}.lvPublic em{grid-column:2}.priceBox div{display:grid}.publicBrand span{display:none}}
 .lvPublic{grid-template-columns:52px minmax(0,1fr) auto;gap:14px;align-items:center}
 .lvIcon{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:linear-gradient(145deg,#e7f8f8,#d7eff5);border:1px solid #b9e1e5;color:#076f79;font-size:10px;font-weight:800;letter-spacing:.04em;box-shadow:0 3px 10px rgba(15,51,75,.08)}
+.lvIcon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:700px){.lvPublic{grid-template-columns:48px minmax(0,1fr)}.lvIcon{width:40px;height:40px}.lvPublic em{grid-column:2}}
 
