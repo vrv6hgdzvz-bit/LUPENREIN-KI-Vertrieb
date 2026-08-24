@@ -117,6 +117,25 @@ export type OfferItem = {
   unitPrice: number
   billing: OfferBilling
 }
+export type ServiceFrequency = {
+  preset: string
+  custom?: string
+}
+export type ServiceSpecificationItem = {
+  id: string
+  groupId: string
+  groupLabel: string
+  groupIcon: string
+  activityId: string
+  activityLabel: string
+  shortText: string
+  activityIcon?: string
+  frequency: ServiceFrequency
+}
+export type ServiceSpecification = {
+  version: number
+  items: ServiceSpecificationItem[]
+}
 export type Offer = {
   id: string
   leadId: string
@@ -126,6 +145,7 @@ export type Offer = {
   status: OfferStatus
   validUntil: string
   items: OfferItem[]
+  serviceSpecification: ServiceSpecification
   notes?: string
   subtotalOneTime: number
   subtotalMonthly: number
@@ -229,3 +249,4 @@ export type AgentRecommendation = {
   taskTitle: string
   dueAt: string
 }
+
