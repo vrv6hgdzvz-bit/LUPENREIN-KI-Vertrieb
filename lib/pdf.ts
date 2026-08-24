@@ -21,6 +21,7 @@ function wrap(text:string,font:PDFFont,size:number,maxWidth:number){
  if(current)rows.push(current);return rows.length?rows:['']
 }
 function text(page:PDFPage,value:string,x:number,y:number,font:PDFFont,size=9,color=navy){page.drawText(safe(value),{x,y,font,size,color})}
+function rightText(page:PDFPage,value:string,right:number,y:number,font:PDFFont,size=9,color=navy){const clean=safe(value);page.drawText(clean,{x:right-font.widthOfTextAtSize(clean,size),y,font,size,color})}
 
 async function makePage(doc:PDFDocument,asset:LetterheadAsset|null,templateDoc:PDFDocument|null,image:any|null){
  if(asset?.mime==='application/pdf'&&templateDoc){const [copied]=await doc.copyPages(templateDoc,[0]);return doc.addPage(copied)}
@@ -91,17 +92,18 @@ export async function buildOfferPdf(offer:Offer,lead:Lead,survey?:SiteSurvey){
   text(page,`${survey.areaSqm.toLocaleString('de-DE')} m² · ${survey.frequencyPerWeek}x/Woche · ${survey.floorType}`,left+10,y-34,regular,8,gray);y-=54
  }
 
- async function tableHeader(){await ensure(28);text(page,'LEISTUNG',left,y,bold,7,gray);text(page,'MENGE',335,y,bold,7,gray);text(page,'EINZELPREIS',390,y,bold,7,gray);text(page,'GESAMT',465,y,bold,7,gray);y-=8;rowRule(y);y-=12}
+ async function tableHeader(){await ensure(28);text(page,'LEISTUNG',left,y,bold,7,gray);text(page,'MENGE',300,y,bold,7,gray);rightText(page,'EINZELPREIS',430,y,bold,7,gray);rightText(page,'GESAMT',right,y,bold,7,gray);y-=8;rowRule(y);y-=12}
  await tableHeader()
  for(const item of offer.items){
   const descRows=item.description?wrap(item.description,regular,7.5,250):[]
-  const rowHeight=Math.max(34,24+descRows.slice(0,3).length*10)
+  const quantityRows=wrap(`${item.quantity} ${item.unit}`,regular,7.5,75)
+  const rowHeight=Math.max(34,24+Math.max(descRows.slice(0,3).length,quantityRows.length-1)*10)
   if(y-rowHeight<bottom){await newPage();text(page,`Angebot ${offer.number} · ${lead.company}`,left,y,bold,8,gray);y-=26;await tableHeader()}
   text(page,item.service,left,y,bold,8.5,navy)
   descRows.slice(0,3).forEach((r,i)=>text(page,r,left,y-12-i*10,regular,7.5,gray))
-  text(page,`${item.quantity} ${item.unit}`,335,y,regular,8,navy)
-  text(page,money(item.unitPrice),390,y,regular,8,navy)
-  text(page,money(item.quantity*item.unitPrice),465,y,bold,8,navy)
+  quantityRows.forEach((r,i)=>text(page,r,300,y-i*10,regular,7.5,navy))
+  rightText(page,money(item.unitPrice),430,y,regular,8,navy)
+  rightText(page,money(item.quantity*item.unitPrice),right,y,bold,8,navy)
   y-=rowHeight;rowRule(y+7);y-=7
  }
  y-=8
