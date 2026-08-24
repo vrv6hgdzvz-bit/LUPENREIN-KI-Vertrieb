@@ -1,0 +1,3 @@
+import {NextResponse} from 'next/server';import {updateSelfServiceRequest} from '@/lib/selfService'
+export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){try{const {id}=await params,b=await req.json();if(b.status&&!['submitted','review','offered','accepted'].includes(b.status))return NextResponse.json({error:'Ungültiger Status.'},{status:400});const row=await updateSelfServiceRequest(id,{status:b.status,monthlyNet:Number(b.monthlyNet),oneTimeNet:Number(b.oneTimeNet),lvItems:Array.isArray(b.lvItems)?b.lvItems:undefined});return row?NextResponse.json({request:row}):NextResponse.json({error:'Anfrage nicht gefunden.'},{status:404})}catch(e:any){return NextResponse.json({error:e.message||'Speichern fehlgeschlagen.'},{status:500})}}
+
