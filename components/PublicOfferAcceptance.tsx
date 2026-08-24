@@ -1,0 +1,4 @@
+'use client'
+import {useState} from 'react'
+export default function PublicOfferAcceptance({token,accepted}:{token:string;accepted:boolean}){const [done,setDone]=useState(accepted),[busy,setBusy]=useState(false),[error,setError]=useState('');async function accept(){setBusy(true);const r=await fetch(`/api/public/offers/${token}/accept`,{method:'POST'});const j=await r.json();setBusy(false);if(r.ok)setDone(true);else setError(j.error||'Annahme konnte nicht gespeichert werden.')}return done?<div className="acceptSuccess"><b>✓ Angebot angenommen</b><p>Vielen Dank. Unser Team meldet sich kurzfristig zur Abstimmung des Starts.</p></div>:<div><button className="primary publicCta" disabled={busy} onClick={accept}>{busy?'Annahme wird gespeichert …':'Angebot verbindlich annehmen'}</button><p className="legalHint">Mit Klick bestätigen Sie den dargestellten Leistungsumfang und die Angebotsbedingungen.</p>{error&&<p className="actionNotice">{error}</p>}</div>}
+
