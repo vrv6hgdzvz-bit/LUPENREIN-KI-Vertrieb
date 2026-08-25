@@ -1,7 +1,7 @@
 import 'server-only'
 import {promises as fs} from 'fs'
 import path from 'path'
-import type {Activity, ActivityDirection, ActivityType, Lead, LeadStatus, Message, MessageStatus, ReplyIntent, Task, TaskType, TaskStatus, Offer, OfferItem, OfferStatus, SiteSurvey, SurveyStatus, CustomerObject, CustomerObjectStatus} from './types'
+import type {Activity, ActivityDirection, ActivityType, Lead, LeadStatus, Message, MessageStatus, ReplyIntent, Task, TaskType, TaskStatus, Offer, OfferItem, OfferStatus, SiteSurvey, SurveyStatus, CustomerObject, CustomerObjectStatus, WebsiteVisitor} from './types'
 import {getSupabaseUser,supabaseConfigured,supabaseRest} from './supabase'
 
 const file = path.join(process.cwd(),'data','leads.json')
@@ -75,6 +75,24 @@ export async function createActivity(input:{leadId:string;type:ActivityType;dire
   if(!r.ok)throw new Error('Aktivität konnte nicht gespeichert werden.');return activityFromDb((await r.json())[0])
 }
 export function normalize(value:string){return value.toLowerCase().replace(/[^a-z0-9äöüß]/gi,'').trim()}
+
+const websiteVisitorFile=path.join(process.cwd(),'data','website-visitors.json')
+async function readWebsiteVisitors():Promise<WebsiteVisitor[]>{try{return JSON.parse(await fs.readFile(websiteVisitorFile,'utf8'))}catch{return []}}
+async function writeWebsiteVisitors(items:WebsiteVisitor[]){await fs.writeFile(websiteVisitorFile,JSON.stringify(items,null,2),'utf8')}
+function websiteVisitorFromDb(x:any):WebsiteVisitor{return {id:String(x.id),provider:x.provider||'webhook',providerVisitId:x.provider_visit_id||'',company:x.company,domain:x.domain||undefined,city:x.city||undefined,country:x.country||undefined,industry:x.industry||undefined,pages:Array.isArray(x.pages)?x.pages:[],firstSeenAt:x.first_seen_at,lastSeenAt:x.last_seen_at,visits:Number(x.visits||1),intentScore:Number(x.intent_score||0),status:x.status||'Neu',leadId:x.lead_id?String(x.lead_id):undefined,createdAt:x.created_at}}
+export async function getWebsiteVisitors():Promise<WebsiteVisitor[]>{
+ if(!supabaseConfigured)return (await readWebsiteVisitors()).sort((a,b)=>b.lastSeenAt.localeCompare(a.lastSeenAt))
+ const user=await getSupabaseUser();if(!user)return []
+ const r=await supabaseRest(`website_visitors?owner_id=eq.${encodeURIComponent(user.id)}&select=*&order=last_seen_at.desc`);if(!r.ok)return []
+ return ((await r.json()) as any[]).map(websiteVisitorFromDb)
+}
+export async function updateWebsiteVisitor(id:string,patch:{status?:WebsiteVisitor['status'];leadId?:string}){
+ if(!supabaseConfigured){const rows=await readWebsiteVisitors();const i=rows.findIndex(x=>x.id===id);if(i<0)return null;rows[i]={...rows[i],...patch};await writeWebsiteVisitors(rows);return rows[i]}
+ const user=await getSupabaseUser();if(!user)return null
+ const db:any={};if(patch.status)db.status=patch.status;if(patch.leadId!==undefined)db.lead_id=patch.leadId||null
+ const r=await supabaseRest(`website_visitors?id=eq.${encodeURIComponent(id)}&owner_id=eq.${encodeURIComponent(user.id)}&select=*`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(db)});if(!r.ok)return null
+ const rows=await r.json() as any[];return rows[0]?websiteVisitorFromDb(rows[0]):null
+}
 
 
 function messageFromDb(x:any):Message{return {id:String(x.id),leadId:String(x.lead_id),subject:x.subject,body:x.body,to:x.to_email,status:x.status,provider:x.provider||'preview',aiMode:x.ai_mode||'local',sentAt:x.sent_at||undefined,gmailDraftId:x.gmail_draft_id||undefined,gmailMessageId:x.gmail_message_id||undefined,replyText:x.reply_text||undefined,replyIntent:x.reply_intent||undefined,replySummary:x.reply_summary||undefined,followUpAt:x.follow_up_at||undefined,createdAt:x.created_at,updatedAt:x.updated_at}}
