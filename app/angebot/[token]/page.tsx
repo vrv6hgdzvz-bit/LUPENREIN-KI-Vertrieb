@@ -22,7 +22,7 @@ export default async function Page({params}:{params:Promise<{token:string}>}){
   </section>
   <p className="standardClause"><b>Ausführungshinweis</b>Die angebotenen Leistungen erfolgen gemäß Absprache und beigefügtem Leistungsverzeichnis (LV).</p>
   <section className="priceBox"><h2>Ihr Preis</h2>{row.pricing.monthlyNet>0&&<div><span>Monatliche Pauschale netto</span><b>{money(row.pricing.monthlyNet)}</b></div>}{row.pricing.oneTimeNet>0&&<div><span>Einmalige Leistung netto</span><b>{money(row.pricing.oneTimeNet)}</b></div>}<small>zzgl. gesetzlicher Umsatzsteuer · gültig bis {new Date(row.validUntil).toLocaleDateString('de-DE')} · Mindestlaufzeit bei laufender Reinigung: 12 Monate</small></section>
-  <PublicOfferAcceptance token={token} accepted={row.status==='accepted'}/>
+  <PublicOfferAcceptance token={token} status={row.status}/>
  </article></main>
 }
 
