@@ -1,6 +1,28 @@
-import {notFound} from 'next/navigation';import {getSelfServiceRequest} from '@/lib/selfService';import PublicOfferAcceptance from '@/components/PublicOfferAcceptance'
-const ICON_PATHS:Record<string,string[]>={allgemein:['M12 3l1.4 4.2L18 9l-4.6 1.8L12 15l-1.4-4.2L6 9l4.6-1.8L12 3z','M5 14l.8 2.2L8 17l-2.2.8L5 20l-.8-2.2L2 17l2.2-.8L5 14z'],boden:['M15 3L8 15','M6 14h5l3 7H3l3-7z'],sanitaer:['M7 3h10v6H7z','M8 9h8c0 4-1.5 7-4 7s-4-3-4-7z','M12 16v5','M9 21h6'],kueche:['M4 7h12v5a6 6 0 01-12 0V7z','M16 9h2a3 3 0 010 6h-3','M3 21h15'],glas:['M4 3h16v18H4z','M12 3v18','M4 12h16'],treppe:['M3 19h5v-4h4v-4h4V7h5'],aufzug:['M5 3h14v18H5z','M9 9l3-3 3 3','M12 6v12','M9 15l3 3 3-3'],sonder:['M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3z'],bau:['M4 14a8 8 0 0116 0','M3 14h18','M8 14V9','M16 14V9'],industrie:['M12 8a4 4 0 100 8 4 4 0 000-8z','M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1']}
-function LvIcon({groupId}:{groupId:string}){const paths=ICON_PATHS[groupId]||ICON_PATHS.sonder;return <span className="lvIcon" aria-hidden="true"><svg viewBox="0 0 24 24">{paths.map((d,i)=><path d={d} key={i}/>)}</svg></span>}
-const money=(n:number)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(n)
-export default async function Page({params}:{params:Promise<{token:string}>}){const {token}=await params,row=await getSelfServiceRequest(token);if(!row)notFound();return <main className="publicShell"><article className="publicCard offerPublic"><header className="publicBrand"><img src="/lupenrein-logo.png" alt="LUPENREIN"/><span>Angebot {row.offerNumber}</span></header><div className="offerHero"><span>Persönliches Reinigungsangebot</span><h1>{row.answers.company}</h1><p>{row.answers.address}</p></div><div className="offerUtility"><a className="secondary" href={`/api/public/offers/${token}/pdf`}>PDF mit LV herunterladen / drucken</a></div><section><h2>Ihr Leistungsumfang</h2>{[...new Set(row.lvItems.map(x=>x.groupId))].map(g=><div className="lvGroup" key={g}><h3>{row.lvItems.find(x=>x.groupId===g)?.groupLabel}</h3>{row.lvItems.filter(x=>x.groupId===g).map(x=><div className="lvPublic" key={x.id}><LvIcon groupId={g}/><div><b>{x.activityLabel}</b><p>{x.shortText}</p></div><em>{x.frequency.custom||x.frequency.preset}</em></div>)}</div>)}</section><p className="standardClause">Die angebotenen Leistungen erfolgen gemäß Absprache und beigefügtem Leistungsverzeichnis (LV).</p><section className="priceBox"><h2>Ihr Preis</h2>{row.pricing.monthlyNet>0&&<div><span>Monatliche Pauschale netto</span><b>{money(row.pricing.monthlyNet)}</b></div>}{row.pricing.oneTimeNet>0&&<div><span>Einmalige Leistung netto</span><b>{money(row.pricing.oneTimeNet)}</b></div>}<small>zzgl. gesetzlicher Umsatzsteuer · gültig bis {new Date(row.validUntil).toLocaleDateString('de-DE')} · Mindestlaufzeit bei laufender Reinigung: 12 Monate</small></section><PublicOfferAcceptance token={token} accepted={row.status==='accepted'}/></article></main>}
+import {notFound} from 'next/navigation'
+import PublicOfferAcceptance from '@/components/PublicOfferAcceptance'
+import {getSelfServiceRequest} from '@/lib/selfService'
+
+const money=(value:number)=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(value)
+
+export default async function Page({params}:{params:Promise<{token:string}>}){
+ const {token}=await params
+ const row=await getSelfServiceRequest(token)
+ if(!row)notFound()
+ const groups=[...new Set(row.lvItems.map(item=>item.groupId))]
+ return <main className="publicShell"><article className="publicCard offerPublic">
+  <header className="publicBrand"><img src="/lupenrein-logo.png" alt="LUPENREIN Service GmbH"/><div><b>{row.offerNumber}</b><span>Leistungsverzeichnis zum Angebot</span></div></header>
+  <div className="offerHero"><span>Persönliches Reinigungsangebot</span><h1>{row.answers.company}</h1><p>{row.answers.address}</p></div>
+  <div className="offerUtility"><a className="secondary" href={`/api/public/offers/${token}/pdf`}>PDF mit LV herunterladen / drucken</a></div>
+  <section className="lvDocument">
+   <div className="lvDocumentTitle"><div><span>Leistungsumfang</span><h2>LEISTUNGSVERZEICHNIS</h2></div><b>{row.answers.serviceTypes.join(' · ')}</b></div>
+   <div className="lvObjectSummary"><div><span>Auftraggeber</span><b>{row.answers.company}</b></div><div><span>Reinigungsobjekt</span><b>{row.answers.address}</b></div><div><span>Fläche</span><b>ca. {row.answers.areaSqm.toLocaleString('de-DE')} m²</b></div></div>
+   <div className="lvTableWrap"><table className="lvTable"><thead><tr><th>Bereich</th><th>Reinigungsrhythmus</th><th>Tätigkeit</th></tr></thead><tbody>
+    {groups.flatMap(groupId=>{const items=row.lvItems.filter(item=>item.groupId===groupId);return items.map((item,index)=><tr key={item.id}>{index===0&&<th scope="rowgroup" rowSpan={items.length}>{item.groupLabel}</th>}<td className="lvRhythm">{item.frequency.custom||item.frequency.preset}</td><td><div className="lvTask"><span aria-hidden="true"/><div><b>{item.activityLabel}</b>{item.shortText&&<p>{item.shortText}</p>}</div></div></td></tr>)})}
+   </tbody></table></div>
+  </section>
+  <p className="standardClause"><b>Ausführungshinweis</b>Die angebotenen Leistungen erfolgen gemäß Absprache und beigefügtem Leistungsverzeichnis (LV).</p>
+  <section className="priceBox"><h2>Ihr Preis</h2>{row.pricing.monthlyNet>0&&<div><span>Monatliche Pauschale netto</span><b>{money(row.pricing.monthlyNet)}</b></div>}{row.pricing.oneTimeNet>0&&<div><span>Einmalige Leistung netto</span><b>{money(row.pricing.oneTimeNet)}</b></div>}<small>zzgl. gesetzlicher Umsatzsteuer · gültig bis {new Date(row.validUntil).toLocaleDateString('de-DE')} · Mindestlaufzeit bei laufender Reinigung: 12 Monate</small></section>
+  <PublicOfferAcceptance token={token} accepted={row.status==='accepted'}/>
+ </article></main>
+}
 
