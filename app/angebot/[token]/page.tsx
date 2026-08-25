@@ -10,18 +10,23 @@ export default async function Page({params}:{params:Promise<{token:string}>}){
  if(!row)notFound()
  const groups=[...new Set(row.lvItems.map(item=>item.groupId))]
  return <main className="publicShell"><article className="publicCard offerPublic">
-  <header className="publicBrand"><img src="/lupenrein-logo.png" alt="LUPENREIN Service GmbH"/><div><b>{row.offerNumber}</b><span>Leistungsverzeichnis zum Angebot</span></div></header>
+  <header className="publicBrand"><img src="/lupenrein-logo.png" alt="LUPENREIN Service GmbH"/><div><b>{row.offerNumber}</b><span>Persönliches Reinigungsangebot</span></div></header>
   <div className="offerHero"><span>Persönliches Reinigungsangebot</span><h1>{row.answers.company}</h1><p>{row.answers.address}</p></div>
   <div className="offerUtility"><a className="secondary" href={`/api/public/offers/${token}/pdf`}>PDF mit LV herunterladen / drucken</a></div>
+  <section className="customerOfferDocument">
+   <div className="customerDocumentTitle"><span>Dokument 1</span><h2>ANGEBOT</h2></div>
+   <div className="customerOfferFacts"><div><span>Auftraggeber</span><b>{row.answers.company}</b></div><div><span>Reinigungsobjekt</span><b>{row.answers.address}</b></div><div><span>Leistungsart</span><b>{row.answers.serviceTypes.join(' · ')}</b></div><div><span>Gültig bis</span><b>{new Date(row.validUntil).toLocaleDateString('de-DE')}</b></div></div>
+   <section className="priceBox"><h2>Ihr Angebotspreis</h2>{row.pricing.monthlyNet>0&&<div><span>Monatliche Pauschale netto</span><b>{money(row.pricing.monthlyNet)}</b></div>}{row.pricing.oneTimeNet>0&&<div><span>Einmalige Leistung netto</span><b>{money(row.pricing.oneTimeNet)}</b></div>}<small>zzgl. gesetzlicher Umsatzsteuer · Mindestlaufzeit bei laufender Reinigung: 12 Monate</small></section>
+   <p className="standardClause"><b>Ausführungshinweis</b>Die angebotenen Leistungen erfolgen gemäß Absprache und beigefügtem Leistungsverzeichnis (LV).</p>
+  </section>
+  <div className="documentDivider"><span>Dokument 2</span></div>
   <section className="lvDocument">
-   <div className="lvDocumentTitle"><div><span>Leistungsumfang</span><h2>LEISTUNGSVERZEICHNIS</h2></div><b>{row.answers.serviceTypes.join(' · ')}</b></div>
+   <div className="lvDocumentTitle"><div><span>Anlage zum Angebot {row.offerNumber}</span><h2>LEISTUNGSVERZEICHNIS (LV)</h2></div><b>{row.answers.serviceTypes.join(' · ')}</b></div>
    <div className="lvObjectSummary"><div><span>Auftraggeber</span><b>{row.answers.company}</b></div><div><span>Reinigungsobjekt</span><b>{row.answers.address}</b></div><div><span>Fläche</span><b>ca. {row.answers.areaSqm.toLocaleString('de-DE')} m²</b></div></div>
    <div className="lvTableWrap"><table className="lvTable"><thead><tr><th>Bereich</th><th>Reinigungsrhythmus</th><th>Tätigkeit</th></tr></thead><tbody>
     {groups.flatMap(groupId=>{const items=row.lvItems.filter(item=>item.groupId===groupId);return items.map((item,index)=><tr key={item.id}>{index===0&&<th scope="rowgroup" rowSpan={items.length}>{item.groupLabel}</th>}<td className="lvRhythm">{item.frequency.custom||item.frequency.preset}</td><td><div className="lvTask"><span aria-hidden="true"/><div><b>{item.activityLabel}</b>{item.shortText&&<p>{item.shortText}</p>}</div></div></td></tr>)})}
    </tbody></table></div>
   </section>
-  <p className="standardClause"><b>Ausführungshinweis</b>Die angebotenen Leistungen erfolgen gemäß Absprache und beigefügtem Leistungsverzeichnis (LV).</p>
-  <section className="priceBox"><h2>Ihr Preis</h2>{row.pricing.monthlyNet>0&&<div><span>Monatliche Pauschale netto</span><b>{money(row.pricing.monthlyNet)}</b></div>}{row.pricing.oneTimeNet>0&&<div><span>Einmalige Leistung netto</span><b>{money(row.pricing.oneTimeNet)}</b></div>}<small>zzgl. gesetzlicher Umsatzsteuer · gültig bis {new Date(row.validUntil).toLocaleDateString('de-DE')} · Mindestlaufzeit bei laufender Reinigung: 12 Monate</small></section>
   <PublicOfferAcceptance token={token} status={row.status}/>
  </article></main>
 }
