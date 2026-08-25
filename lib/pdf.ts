@@ -124,14 +124,49 @@ export async function buildOfferPdf(offer:Offer,lead:Lead,survey?:SiteSurvey){
 
  const lvItems=offer.serviceSpecification?.items||[]
  if(lvItems.length){
-  await newPage();text(page,'LEISTUNGSVERZEICHNIS (LV)',left,y,bold,16,navy);y-=20;text(page,`Anlage zu Angebot ${offer.number} · ${lead.company}`,left,y,regular,8,gray);y-=25
+  const areaWidth=105,frequencyWidth=100,activityWidth=contentWidth-areaWidth-frequencyWidth
+  const columnX=[left,left+areaWidth,left+areaWidth+frequencyWidth,right]
+  const pale=rgb(238/255,248/255,252/255)
+  const grid=rgb(159/255,178/255,188/255)
+  async function lvPage(continued=false){
+   await newPage()
+   text(page,continued?'LEISTUNGSVERZEICHNIS · FORTSETZUNG':'LEISTUNGSVERZEICHNIS',left,y,bold,continued?12:16,navy)
+   rightText(page,`LV zu ${offer.number}`,right,y,bold,8,navy);y-=18
+   text(page,`${lead.company} · ${lead.address||lead.city}`,left,y,regular,8,gray);y-=20
+   if(!continued&&survey){
+    page.drawRectangle({x:left,y:y-34,width:contentWidth,height:38,color:rgb(.973,.988,.994),borderColor:grid,borderWidth:.6})
+    text(page,'AUFTRAGGEBER',left+8,y-8,bold,6.5,gray);text(page,lead.company,left+8,y-21,bold,8,navy)
+    text(page,'REINIGUNGSOBJEKT',left+145,y-8,bold,6.5,gray);text(page,survey.address,left+145,y-21,bold,8,navy)
+    text(page,'FLÄCHE',right-78,y-8,bold,6.5,gray);text(page,`ca. ${survey.areaSqm.toLocaleString('de-DE')} m²`,right-78,y-21,bold,8,navy);y-=48
+   }
+   page.drawRectangle({x:left,y:y-19,width:contentWidth,height:21,color:navy})
+   text(page,'BEREICH',left+7,y-12,bold,7,rgb(1,1,1));text(page,'REINIGUNGSRHYTHMUS',columnX[1]+7,y-12,bold,6.5,rgb(1,1,1));text(page,'TÄTIGKEIT',columnX[2]+7,y-12,bold,7,rgb(1,1,1));y-=19
+  }
+  await lvPage()
   const groups=[...new Set(lvItems.map(x=>x.groupId))]
   for(const groupId of groups){
-   const entries=lvItems.filter(x=>x.groupId===groupId);if(y-35-entries.length*38<bottom){await newPage();text(page,'LEISTUNGSVERZEICHNIS (FORTSETZUNG)',left,y,bold,12,navy);y-=28}
-   text(page,entries[0].groupLabel,left,y,bold,11,blue);y-=12;rowRule(y);y-=15
-   for(const entry of entries){if(y-34<bottom){await newPage();text(page,entries[0].groupLabel,left,y,bold,11,blue);y-=22}const frequency=entry.frequency.custom||entry.frequency.preset;text(page,entry.activityLabel,left,y,bold,8.5,navy);text(page,frequency,410,y,bold,8,navy);y-=11;for(const row of wrap(entry.shortText,regular,7.5,330).slice(0,2)){text(page,row,left,y,regular,7.5,gray);y-=9}y-=8;rowRule(y+4)}y-=14
+   const entries=lvItems.filter(x=>x.groupId===groupId)
+   for(let index=0;index<entries.length;index++){
+    const entry=entries[index],frequency=entry.frequency.custom||entry.frequency.preset
+    const titleRows=wrap(entry.activityLabel,bold,7.8,activityWidth-29)
+    const detailRows=wrap(entry.shortText,regular,7.1,activityWidth-29)
+    const frequencyRows=wrap(frequency,bold,7.2,frequencyWidth-14)
+    const areaRows=index===0?wrap(entry.groupLabel,bold,8,areaWidth-14):[]
+    const rowHeight=Math.max(32,14+titleRows.length*9+detailRows.length*8,14+frequencyRows.length*9,14+areaRows.length*9)
+    if(y-rowHeight<bottom){await lvPage(true);index--;continue}
+    if(index===0)page.drawRectangle({x:left,y:y-rowHeight,width:areaWidth,height:rowHeight,color:pale})
+    page.drawRectangle({x:left,y:y-rowHeight,width:contentWidth,height:rowHeight,borderColor:grid,borderWidth:.55})
+    for(const x of columnX.slice(1,3))page.drawLine({start:{x,y},end:{x,y:y-rowHeight},thickness:.55,color:grid})
+    if(index===0)areaRows.forEach((r,i)=>text(page,r,left+7,y-14-i*9,bold,8,navy))
+    frequencyRows.forEach((r,i)=>text(page,r,columnX[1]+7,y-14-i*9,bold,7.2,navy))
+    page.drawRectangle({x:columnX[2]+7,y:y-17,width:8,height:8,borderColor:blue,borderWidth:.8})
+    titleRows.forEach((r,i)=>text(page,r,columnX[2]+21,y-13-i*9,bold,7.8,navy))
+    const detailsStart=y-14-titleRows.length*9
+    detailRows.forEach((r,i)=>text(page,r,columnX[2]+21,detailsStart-i*8,regular,7.1,gray))
+    y-=rowHeight
+   }
   }
-  await ensure(42);text(page,'Ausführungshinweis',left,y,bold,8,blue);y-=13;for(const row of wrap('Die angebotenen Leistungen erfolgen gemäß Absprache und beigefügtem Leistungsverzeichnis (LV).',regular,8,contentWidth)){text(page,row,left,y,regular,8,gray);y-=11}
+  await ensure(48);y-=15;page.drawRectangle({x:left,y:y-30,width:contentWidth,height:34,color:pale});text(page,'AUSFÜHRUNGSHINWEIS',left+10,y-9,bold,7,blue);text(page,'Die angebotenen Leistungen erfolgen gemäß Absprache und beigefügtem Leistungsverzeichnis (LV).',left+10,y-22,regular,8,navy);y-=38
  }
 
  if(!activeAsset){text(page,`USt-IdNr. ${COMPANY.vatId} · ${COMPANY.register} · ${COMPANY.court}`,left,45,regular,7,gray)}
