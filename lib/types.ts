@@ -26,7 +26,7 @@ export type Lead = {
   phone: string
   website?: string
   address?: string
-  source?: 'Manuell'|'Google Places'|'Demo Finder'|'Self-Service'
+  source?: 'Manuell'|'Google Places'|'Demo Finder'|'Self-Service'|'Website-Besuch'
   sourceId?: string
   reason: string
   potential: 'hoch'|'mittel'|'niedrig'
@@ -88,6 +88,25 @@ export type FinderCandidate = {
   potential: 'hoch'|'mittel'|'niedrig'
   reason: string
   duplicate: boolean
+}
+
+export type WebsiteVisitor = {
+  id: string
+  provider: string
+  providerVisitId: string
+  company: string
+  domain?: string
+  city?: string
+  country?: string
+  industry?: string
+  pages: {url:string;title?:string;viewedAt?:string}[]
+  firstSeenAt: string
+  lastSeenAt: string
+  visits: number
+  intentScore: number
+  status: 'Neu'|'Übernommen'|'Ignoriert'
+  leadId?: string
+  createdAt: string
 }
 
 export const TASK_TYPES = ['Follow-up','Anruf','Besichtigung','Angebot','Sonstiges'] as const
