@@ -26,7 +26,7 @@ export type Lead = {
   phone: string
   website?: string
   address?: string
-  source?: 'Manuell'|'Google Places'|'Demo Finder'|'Self-Service'|'Website-Besuch'
+  source?: 'Manuell'|'Google Places'|'Demo Finder'|'Self-Service'|'Website-Besuch'|'Ausschreibung'
   sourceId?: string
   reason: string
   potential: 'hoch'|'mittel'|'niedrig'
@@ -81,7 +81,7 @@ export type FinderCandidate = {
   sector: string
   website: string
   phone: string
-  source: 'Google Places'|'Demo Finder'
+  source: 'Google Places'|'Demo Finder'|'Ausschreibung'
   sourceId: string
   score: number
   service: string
