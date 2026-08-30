@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server'
-import {createSelfServiceRequest} from '@/lib/selfService'
+import {createSelfServiceRequest,updateSelfServiceRequest} from '@/lib/selfService'
 import {allowPublicRequest,clientIp,normalizeQuestionnaire,requirePublicBackend} from '@/lib/publicSelfServiceGuard'
 
 export async function POST(req:Request){
@@ -11,7 +11,10 @@ export async function POST(req:Request){
   if(!allowPublicRequest('questionnaire',ip))return NextResponse.json({error:'Zu viele Anfragen. Bitte versuchen Sie es später erneut.'},{status:429})
   const answers=normalizeQuestionnaire(await req.json())
   const row=await createSelfServiceRequest(answers)
-  if(row.pricing.reviewMode==='review')return NextResponse.json({mode:'review',requestId:row.id,message:'Vielen Dank. Ihre Anfrage wird fachlich geprüft. Wir melden uns mit dem finalen Angebot.'},{status:201})
+  if(row.pricing.reviewMode==='review'){
+   await updateSelfServiceRequest(row.id,{status:'review'})
+   return NextResponse.json({mode:'review',requestId:row.id,message:'Vielen Dank. Ihre Anfrage wird fachlich geprüft. Wir melden uns mit dem finalen Angebot.'},{status:201})
+  }
   return NextResponse.json({mode:'instant',offerUrl:`/angebot/${row.offerToken}`,requestId:row.id},{status:201})
  }catch(e:any){
   const message=e?.message||'Anfrage konnte nicht gespeichert werden.'
