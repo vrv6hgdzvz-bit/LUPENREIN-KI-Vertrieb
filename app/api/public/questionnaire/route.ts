@@ -13,7 +13,7 @@ export async function POST(req:Request){
   const row=await createSelfServiceRequest(answers)
   if(row.pricing.reviewMode==='review'){
    await updateSelfServiceRequest(row.id,{status:'review'})
-   return NextResponse.json({mode:'review',requestId:row.id,message:'Vielen Dank. Ihre Anfrage wird fachlich geprüft. Wir melden uns mit dem finalen Angebot.'},{status:201})
+   return NextResponse.json({mode:'review',offerUrl:'/anfrage/eingegangen',requestId:row.id,message:'Vielen Dank. Ihre Anfrage wird fachlich geprüft.'},{status:201})
   }
   return NextResponse.json({mode:'instant',offerUrl:`/angebot/${row.offerToken}`,requestId:row.id},{status:201})
  }catch(e:any){
