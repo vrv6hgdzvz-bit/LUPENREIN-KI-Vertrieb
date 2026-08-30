@@ -1,4 +1,21 @@
 import {NextResponse} from 'next/server'
 import {createSelfServiceRequest} from '@/lib/selfService'
-export async function POST(req:Request){try{const b=await req.json();if(!String(b.company||'').trim()||!String(b.email||'').includes('@')||Number(b.areaSqm)<=0||!String(b.address||'').trim())return NextResponse.json({error:'Bitte füllen Sie Unternehmen, E-Mail, Adresse und Fläche vollständig aus.'},{status:400});const row=await createSelfServiceRequest({...b,company:String(b.company).trim(),email:String(b.email).trim(),areaSqm:Number(b.areaSqm),restrooms:Number(b.restrooms||0),kitchens:Number(b.kitchens||0),glassAreaSqm:Number(b.glassAreaSqm||0),staircases:Number(b.staircases||0),elevators:Number(b.elevators||0),serviceTypes:Array.isArray(b.serviceTypes)?b.serviceTypes:[],weekdays:Array.isArray(b.weekdays)?b.weekdays:[],floorTypes:Array.isArray(b.floorTypes)?b.floorTypes:[],areas:Array.isArray(b.areas)?b.areas:[]});return NextResponse.json({mode:'instant',offerUrl:`/angebot/${row.offerToken}`,requestId:row.id},{status:201})}catch(e:any){return NextResponse.json({error:e.message||'Anfrage konnte nicht gespeichert werden.'},{status:500})}}
+import {allowPublicRequest,clientIp,normalizeQuestionnaire,requirePublicBackend} from '@/lib/publicSelfServiceGuard'
 
+export async function POST(req:Request){
+ try{
+  requirePublicBackend()
+  const contentLength=Number(req.headers.get('content-length')||0)
+  if(contentLength>65536)return NextResponse.json({error:'Die Anfrage ist zu groß.'},{status:413})
+  const ip=clientIp(req.headers)
+  if(!allowPublicRequest('questionnaire',ip))return NextResponse.json({error:'Zu viele Anfragen. Bitte versuchen Sie es später erneut.'},{status:429})
+  const answers=normalizeQuestionnaire(await req.json())
+  const row=await createSelfServiceRequest(answers)
+  if(row.pricing.reviewMode==='review')return NextResponse.json({mode:'review',requestId:row.id,message:'Vielen Dank. Ihre Anfrage wird fachlich geprüft. Wir melden uns mit dem finalen Angebot.'},{status:201})
+  return NextResponse.json({mode:'instant',offerUrl:`/angebot/${row.offerToken}`,requestId:row.id},{status:201})
+ }catch(e:any){
+  const message=e?.message||'Anfrage konnte nicht gespeichert werden.'
+  const clientError=message.startsWith('Bitte ')
+  return NextResponse.json({error:message},{status:clientError?400:500})
+ }
+}
