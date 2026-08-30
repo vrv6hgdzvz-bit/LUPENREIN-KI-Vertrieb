@@ -21,6 +21,7 @@ function wrap(text:string,font:PDFFont,size:number,maxWidth:number){
  if(current)rows.push(current);return rows.length?rows:['']
 }
 function text(page:PDFPage,value:string,x:number,y:number,font:PDFFont,size=9,color=navy){page.drawText(safe(value),{x,y,font,size,color})}
+function rightText(page:PDFPage,value:string,right:number,y:number,font:PDFFont,size=9,color=navy){const clean=safe(value);page.drawText(clean,{x:right-font.widthOfTextAtSize(clean,size),y,font,size,color})}
 
 async function makePage(doc:PDFDocument,asset:LetterheadAsset|null,templateDoc:PDFDocument|null,image:any|null){
  if(asset?.mime==='application/pdf'&&templateDoc){const [copied]=await doc.copyPages(templateDoc,[0]);return doc.addPage(copied)}
@@ -91,17 +92,18 @@ export async function buildOfferPdf(offer:Offer,lead:Lead,survey?:SiteSurvey){
   text(page,`${survey.areaSqm.toLocaleString('de-DE')} m² · ${survey.frequencyPerWeek}x/Woche · ${survey.floorType}`,left+10,y-34,regular,8,gray);y-=54
  }
 
- async function tableHeader(){await ensure(28);text(page,'LEISTUNG',left,y,bold,7,gray);text(page,'MENGE',335,y,bold,7,gray);text(page,'EINZELPREIS',390,y,bold,7,gray);text(page,'GESAMT',465,y,bold,7,gray);y-=8;rowRule(y);y-=12}
+ async function tableHeader(){await ensure(28);text(page,'LEISTUNG',left,y,bold,7,gray);text(page,'MENGE',300,y,bold,7,gray);rightText(page,'EINZELPREIS',430,y,bold,7,gray);rightText(page,'GESAMT',right,y,bold,7,gray);y-=8;rowRule(y);y-=12}
  await tableHeader()
  for(const item of offer.items){
   const descRows=item.description?wrap(item.description,regular,7.5,250):[]
-  const rowHeight=Math.max(34,24+descRows.slice(0,3).length*10)
+  const quantityRows=wrap(`${item.quantity} ${item.unit}`,regular,7.5,75)
+  const rowHeight=Math.max(34,24+Math.max(descRows.slice(0,3).length,quantityRows.length-1)*10)
   if(y-rowHeight<bottom){await newPage();text(page,`Angebot ${offer.number} · ${lead.company}`,left,y,bold,8,gray);y-=26;await tableHeader()}
   text(page,item.service,left,y,bold,8.5,navy)
   descRows.slice(0,3).forEach((r,i)=>text(page,r,left,y-12-i*10,regular,7.5,gray))
-  text(page,`${item.quantity} ${item.unit}`,335,y,regular,8,navy)
-  text(page,money(item.unitPrice),390,y,regular,8,navy)
-  text(page,money(item.quantity*item.unitPrice),465,y,bold,8,navy)
+  quantityRows.forEach((r,i)=>text(page,r,300,y-i*10,regular,7.5,navy))
+  rightText(page,money(item.unitPrice),430,y,regular,8,navy)
+  rightText(page,money(item.quantity*item.unitPrice),right,y,bold,8,navy)
   y-=rowHeight;rowRule(y+7);y-=7
  }
  y-=8
@@ -120,7 +122,55 @@ export async function buildOfferPdf(offer:Offer,lead:Lead,survey?:SiteSurvey){
  await ensure(60);y-=18
  text(page,'Freundliche Grüße',left,y,regular,9,navy);y-=16;text(page,COMPANY.name,left,y,bold,9,navy)
 
+ const lvItems=offer.serviceSpecification?.items||[]
+ if(lvItems.length){
+  const areaWidth=105,frequencyWidth=100,activityWidth=contentWidth-areaWidth-frequencyWidth
+  const columnX=[left,left+areaWidth,left+areaWidth+frequencyWidth,right]
+  const pale=rgb(238/255,248/255,252/255)
+  const grid=rgb(159/255,178/255,188/255)
+  async function lvPage(continued=false){
+   await newPage()
+   text(page,continued?'LEISTUNGSVERZEICHNIS · FORTSETZUNG':'LEISTUNGSVERZEICHNIS',left,y,bold,continued?12:16,navy)
+   rightText(page,`LV zu ${offer.number}`,right,y,bold,8,navy);y-=18
+   text(page,`${lead.company} · ${lead.address||lead.city}`,left,y,regular,8,gray);y-=20
+   if(!continued&&survey){
+    page.drawRectangle({x:left,y:y-34,width:contentWidth,height:38,color:rgb(.973,.988,.994),borderColor:grid,borderWidth:.6})
+    text(page,'AUFTRAGGEBER',left+8,y-8,bold,6.5,gray);text(page,lead.company,left+8,y-21,bold,8,navy)
+    text(page,'REINIGUNGSOBJEKT',left+145,y-8,bold,6.5,gray);text(page,survey.address,left+145,y-21,bold,8,navy)
+    text(page,'FLÄCHE',right-78,y-8,bold,6.5,gray);text(page,`ca. ${survey.areaSqm.toLocaleString('de-DE')} m²`,right-78,y-21,bold,8,navy);y-=48
+   }
+   page.drawRectangle({x:left,y:y-19,width:contentWidth,height:21,color:navy})
+   text(page,'BEREICH',left+7,y-12,bold,7,rgb(1,1,1));text(page,'REINIGUNGSRHYTHMUS',columnX[1]+7,y-12,bold,6.5,rgb(1,1,1));text(page,'TÄTIGKEIT',columnX[2]+7,y-12,bold,7,rgb(1,1,1));y-=19
+  }
+  await lvPage()
+  const groups=[...new Set(lvItems.map(x=>x.groupId))]
+  for(const groupId of groups){
+   const entries=lvItems.filter(x=>x.groupId===groupId)
+   for(let index=0;index<entries.length;index++){
+    const entry=entries[index],frequency=entry.frequency.custom||entry.frequency.preset
+    const titleRows=wrap(entry.activityLabel,bold,7.8,activityWidth-29)
+    const detailRows=wrap(entry.shortText,regular,7.1,activityWidth-29)
+    const frequencyRows=wrap(frequency,bold,7.2,frequencyWidth-14)
+    const areaRows=index===0?wrap(entry.groupLabel,bold,8,areaWidth-14):[]
+    const rowHeight=Math.max(32,14+titleRows.length*9+detailRows.length*8,14+frequencyRows.length*9,14+areaRows.length*9)
+    if(y-rowHeight<bottom){await lvPage(true);index--;continue}
+    if(index===0)page.drawRectangle({x:left,y:y-rowHeight,width:areaWidth,height:rowHeight,color:pale})
+    page.drawRectangle({x:left,y:y-rowHeight,width:contentWidth,height:rowHeight,borderColor:grid,borderWidth:.55})
+    for(const x of columnX.slice(1,3))page.drawLine({start:{x,y},end:{x,y:y-rowHeight},thickness:.55,color:grid})
+    if(index===0)areaRows.forEach((r,i)=>text(page,r,left+7,y-14-i*9,bold,8,navy))
+    frequencyRows.forEach((r,i)=>text(page,r,columnX[1]+7,y-14-i*9,bold,7.2,navy))
+    page.drawRectangle({x:columnX[2]+7,y:y-17,width:8,height:8,borderColor:blue,borderWidth:.8})
+    titleRows.forEach((r,i)=>text(page,r,columnX[2]+21,y-13-i*9,bold,7.8,navy))
+    const detailsStart=y-14-titleRows.length*9
+    detailRows.forEach((r,i)=>text(page,r,columnX[2]+21,detailsStart-i*8,regular,7.1,gray))
+    y-=rowHeight
+   }
+  }
+  await ensure(48);y-=15;page.drawRectangle({x:left,y:y-30,width:contentWidth,height:34,color:pale});text(page,'AUSFÜHRUNGSHINWEIS',left+10,y-9,bold,7,blue);text(page,'Die angebotenen Leistungen erfolgen gemäß Absprache und beigefügtem Leistungsverzeichnis (LV).',left+10,y-22,regular,8,navy);y-=38
+ }
+
  if(!activeAsset){text(page,`USt-IdNr. ${COMPANY.vatId} · ${COMPANY.register} · ${COMPANY.court}`,left,45,regular,7,gray)}
  doc.setTitle(`Angebot ${offer.number}`);doc.setAuthor(COMPANY.name);doc.setCreator('LUPENREIN KI Vertrieb')
  return Buffer.from(await doc.save())
 }
+

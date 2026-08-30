@@ -1,6 +1,6 @@
 import './globals.css'
 import './lupenrein-brand.css'
-import {Sidebar} from '@/components/Sidebar'
-import {Topbar} from '@/components/Topbar'
+import AppChrome from '@/components/AppChrome'
 export const metadata={title:'LUPENREIN KI Vertrieb',description:'Interne KI-Vertriebssoftware'}
-export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="de"><body><div className="shell"><Sidebar/><div className="main"><Topbar/><main className="content">{children}</main></div></div></body></html>}
+export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="de"><body><AppChrome>{children}</AppChrome></body></html>}
+

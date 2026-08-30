@@ -1,7 +1,7 @@
 import 'server-only'
 import {promises as fs} from 'fs'
 import path from 'path'
-import type {Activity, ActivityDirection, ActivityType, Lead, LeadStatus, Message, MessageStatus, ReplyIntent, Task, TaskType, TaskStatus, Offer, OfferItem, OfferStatus, SiteSurvey, SurveyStatus, CustomerObject, CustomerObjectStatus} from './types'
+import type {Activity, ActivityDirection, ActivityType, Lead, LeadStatus, Message, MessageStatus, ReplyIntent, Task, TaskType, TaskStatus, Offer, OfferItem, OfferStatus, SiteSurvey, SurveyStatus, CustomerObject, CustomerObjectStatus, WebsiteVisitor} from './types'
 import {getSupabaseUser,supabaseConfigured,supabaseRest} from './supabase'
 
 const file = path.join(process.cwd(),'data','leads.json')
@@ -76,6 +76,24 @@ export async function createActivity(input:{leadId:string;type:ActivityType;dire
 }
 export function normalize(value:string){return value.toLowerCase().replace(/[^a-z0-9äöüß]/gi,'').trim()}
 
+const websiteVisitorFile=path.join(process.cwd(),'data','website-visitors.json')
+async function readWebsiteVisitors():Promise<WebsiteVisitor[]>{try{return JSON.parse(await fs.readFile(websiteVisitorFile,'utf8'))}catch{return []}}
+async function writeWebsiteVisitors(items:WebsiteVisitor[]){await fs.writeFile(websiteVisitorFile,JSON.stringify(items,null,2),'utf8')}
+function websiteVisitorFromDb(x:any):WebsiteVisitor{return {id:String(x.id),provider:x.provider||'webhook',providerVisitId:x.provider_visit_id||'',company:x.company,domain:x.domain||undefined,city:x.city||undefined,country:x.country||undefined,industry:x.industry||undefined,pages:Array.isArray(x.pages)?x.pages:[],firstSeenAt:x.first_seen_at,lastSeenAt:x.last_seen_at,visits:Number(x.visits||1),intentScore:Number(x.intent_score||0),status:x.status||'Neu',leadId:x.lead_id?String(x.lead_id):undefined,createdAt:x.created_at}}
+export async function getWebsiteVisitors():Promise<WebsiteVisitor[]>{
+ if(!supabaseConfigured)return (await readWebsiteVisitors()).sort((a,b)=>b.lastSeenAt.localeCompare(a.lastSeenAt))
+ const user=await getSupabaseUser();if(!user)return []
+ const r=await supabaseRest(`website_visitors?owner_id=eq.${encodeURIComponent(user.id)}&select=*&order=last_seen_at.desc`);if(!r.ok)return []
+ return ((await r.json()) as any[]).map(websiteVisitorFromDb)
+}
+export async function updateWebsiteVisitor(id:string,patch:{status?:WebsiteVisitor['status'];leadId?:string}){
+ if(!supabaseConfigured){const rows=await readWebsiteVisitors();const i=rows.findIndex(x=>x.id===id);if(i<0)return null;rows[i]={...rows[i],...patch};await writeWebsiteVisitors(rows);return rows[i]}
+ const user=await getSupabaseUser();if(!user)return null
+ const db:any={};if(patch.status)db.status=patch.status;if(patch.leadId!==undefined)db.lead_id=patch.leadId||null
+ const r=await supabaseRest(`website_visitors?id=eq.${encodeURIComponent(id)}&owner_id=eq.${encodeURIComponent(user.id)}&select=*`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(db)});if(!r.ok)return null
+ const rows=await r.json() as any[];return rows[0]?websiteVisitorFromDb(rows[0]):null
+}
+
 
 function messageFromDb(x:any):Message{return {id:String(x.id),leadId:String(x.lead_id),subject:x.subject,body:x.body,to:x.to_email,status:x.status,provider:x.provider||'preview',aiMode:x.ai_mode||'local',sentAt:x.sent_at||undefined,gmailDraftId:x.gmail_draft_id||undefined,gmailMessageId:x.gmail_message_id||undefined,replyText:x.reply_text||undefined,replyIntent:x.reply_intent||undefined,replySummary:x.reply_summary||undefined,followUpAt:x.follow_up_at||undefined,createdAt:x.created_at,updatedAt:x.updated_at}}
 export async function getMessages():Promise<Message[]>{
@@ -133,7 +151,7 @@ export async function updateTask(id:string,patch:{status?:TaskStatus;dueAt?:stri
 const offerFile = path.join(process.cwd(),'data','offers.json')
 async function readOffers():Promise<Offer[]>{try{return JSON.parse(await fs.readFile(offerFile,'utf8'))}catch{return []}}
 async function writeOffers(items:Offer[]){await fs.writeFile(offerFile,JSON.stringify(items,null,2),'utf8')}
-function offerFromDb(x:any):Offer{return {id:String(x.id),leadId:String(x.lead_id),surveyId:x.survey_id?String(x.survey_id):undefined,number:x.number,title:x.title,status:x.status,validUntil:x.valid_until,items:x.items||[],notes:x.notes||'',subtotalOneTime:Number(x.subtotal_one_time||0),subtotalMonthly:Number(x.subtotal_monthly||0),vatRate:Number(x.vat_rate||19),sentAt:x.sent_at||undefined,acceptedAt:x.accepted_at||undefined,declinedAt:x.declined_at||undefined,gmailDraftId:x.gmail_draft_id||undefined,createdAt:x.created_at,updatedAt:x.updated_at||undefined}}
+function offerFromDb(x:any):Offer{return {id:String(x.id),leadId:String(x.lead_id),surveyId:x.survey_id?String(x.survey_id):undefined,number:x.number,title:x.title,status:x.status,validUntil:x.valid_until,items:x.items||[],serviceSpecification:x.service_specification||{version:1,items:[]},notes:x.notes||'',subtotalOneTime:Number(x.subtotal_one_time||0),subtotalMonthly:Number(x.subtotal_monthly||0),vatRate:Number(x.vat_rate||19),sentAt:x.sent_at||undefined,acceptedAt:x.accepted_at||undefined,declinedAt:x.declined_at||undefined,gmailDraftId:x.gmail_draft_id||undefined,createdAt:x.created_at,updatedAt:x.updated_at||undefined}}
 function offerTotals(items:OfferItem[]){let one=0,monthly=0;for(const i of items){const value=Number(i.quantity||0)*Number(i.unitPrice||0);if(i.billing==='monatlich')monthly+=value;else one+=value}return {one:Math.round(one*100)/100,monthly:Math.round(monthly*100)/100}}
 function offerNumber(id:string){return `LR-${new Date().getFullYear()}-${String(id).padStart(4,'0')}`}
 export async function getOffers():Promise<Offer[]>{
@@ -148,12 +166,12 @@ export async function getOffer(id:string):Promise<Offer|undefined>{
   const r=await supabaseRest(`offers?id=eq.${encodeURIComponent(id)}&owner_id=eq.${encodeURIComponent(user.id)}&select=*&limit=1`);if(!r.ok)return undefined
   const rows=await r.json() as any[];return rows[0]?offerFromDb(rows[0]):undefined
 }
-export async function createOffer(input:{leadId:string;surveyId?:string;title:string;validUntil:string;items:OfferItem[];notes?:string}){
+export async function createOffer(input:{leadId:string;surveyId?:string;title:string;validUntil:string;items:OfferItem[];serviceSpecification?:Offer['serviceSpecification'];notes?:string}){
   const totals=offerTotals(input.items);const now=new Date().toISOString()
-  if(!supabaseConfigured){const items=await readOffers();const id=String(Math.max(0,...items.map(x=>Number(x.id)||0))+1);const item:Offer={id,leadId:input.leadId,surveyId:input.surveyId,number:offerNumber(id),title:input.title,status:'Entwurf',validUntil:input.validUntil,items:input.items,notes:input.notes||'',subtotalOneTime:totals.one,subtotalMonthly:totals.monthly,vatRate:19,createdAt:now};items.unshift(item);await writeOffers(items);return item}
+  if(!supabaseConfigured){const items=await readOffers();const id=String(Math.max(0,...items.map(x=>Number(x.id)||0))+1);const item:Offer={id,leadId:input.leadId,surveyId:input.surveyId,number:offerNumber(id),title:input.title,status:'Entwurf',validUntil:input.validUntil,items:input.items,serviceSpecification:input.serviceSpecification||{version:1,items:[]},notes:input.notes||'',subtotalOneTime:totals.one,subtotalMonthly:totals.monthly,vatRate:19,createdAt:now};items.unshift(item);await writeOffers(items);return item}
   const user=await getSupabaseUser();if(!user)throw new Error('Nicht angemeldet.')
   const number=`LR-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`
-  const r=await supabaseRest('offers?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({owner_id:user.id,lead_id:input.leadId,survey_id:input.surveyId||null,number,title:input.title,status:'Entwurf',valid_until:input.validUntil,items:input.items,notes:input.notes||null,subtotal_one_time:totals.one,subtotal_monthly:totals.monthly,vat_rate:19})});if(!r.ok)throw new Error('Angebot konnte nicht gespeichert werden.');return offerFromDb((await r.json())[0])
+  const r=await supabaseRest('offers?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({owner_id:user.id,lead_id:input.leadId,survey_id:input.surveyId||null,number,title:input.title,status:'Entwurf',valid_until:input.validUntil,items:input.items,service_specification:input.serviceSpecification||{version:1,items:[]},notes:input.notes||null,subtotal_one_time:totals.one,subtotal_monthly:totals.monthly,vat_rate:19})});if(!r.ok)throw new Error('Angebot konnte nicht gespeichert werden.');return offerFromDb((await r.json())[0])
 }
 export async function updateOffer(id:string,patch:{status?:OfferStatus;title?:string;validUntil?:string;items?:OfferItem[];notes?:string;gmailDraftId?:string}){
   const totals=patch.items?offerTotals(patch.items):null;const now=new Date().toISOString()
@@ -226,3 +244,4 @@ export async function updateCustomerObject(id:string,patch:Partial<Omit<Customer
   const map:any={status:'status',surveyId:'survey_id',objectName:'object_name',objectType:'object_type',address:'address',service:'service',startDate:'start_date',areaSqm:'area_sqm',frequencyPerWeek:'frequency_per_week',monthlyRevenue:'monthly_revenue',oneTimeRevenue:'one_time_revenue',contractTermMonths:'contract_term_months',noticePeriodMonths:'notice_period_months',notes:'notes'};const db:any={updated_at:now};for(const [k,v] of Object.entries(patch))if(k in map)db[map[k]]=v
   const r=await supabaseRest(`customer_objects?id=eq.${encodeURIComponent(id)}&owner_id=eq.${encodeURIComponent(user.id)}&select=*`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(db)});if(!r.ok)return null;const rows=await r.json() as any[];return rows[0]?customerObjectFromDb(rows[0]):null
 }
+

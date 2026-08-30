@@ -26,7 +26,7 @@ export type Lead = {
   phone: string
   website?: string
   address?: string
-  source?: 'Manuell'|'Google Places'|'Demo Finder'
+  source?: 'Manuell'|'Google Places'|'Demo Finder'|'Self-Service'|'Website-Besuch'|'Ausschreibung'
   sourceId?: string
   reason: string
   potential: 'hoch'|'mittel'|'niedrig'
@@ -81,13 +81,32 @@ export type FinderCandidate = {
   sector: string
   website: string
   phone: string
-  source: 'Google Places'|'Demo Finder'
+  source: 'Google Places'|'Demo Finder'|'Ausschreibung'
   sourceId: string
   score: number
   service: string
   potential: 'hoch'|'mittel'|'niedrig'
   reason: string
   duplicate: boolean
+}
+
+export type WebsiteVisitor = {
+  id: string
+  provider: string
+  providerVisitId: string
+  company: string
+  domain?: string
+  city?: string
+  country?: string
+  industry?: string
+  pages: {url:string;title?:string;viewedAt?:string}[]
+  firstSeenAt: string
+  lastSeenAt: string
+  visits: number
+  intentScore: number
+  status: 'Neu'|'Übernommen'|'Ignoriert'
+  leadId?: string
+  createdAt: string
 }
 
 export const TASK_TYPES = ['Follow-up','Anruf','Besichtigung','Angebot','Sonstiges'] as const
@@ -117,6 +136,25 @@ export type OfferItem = {
   unitPrice: number
   billing: OfferBilling
 }
+export type ServiceFrequency = {
+  preset: string
+  custom?: string
+}
+export type ServiceSpecificationItem = {
+  id: string
+  groupId: string
+  groupLabel: string
+  groupIcon: string
+  activityId: string
+  activityLabel: string
+  shortText: string
+  activityIcon?: string
+  frequency: ServiceFrequency
+}
+export type ServiceSpecification = {
+  version: number
+  items: ServiceSpecificationItem[]
+}
 export type Offer = {
   id: string
   leadId: string
@@ -126,6 +164,7 @@ export type Offer = {
   status: OfferStatus
   validUntil: string
   items: OfferItem[]
+  serviceSpecification: ServiceSpecification
   notes?: string
   subtotalOneTime: number
   subtotalMonthly: number
@@ -229,3 +268,4 @@ export type AgentRecommendation = {
   taskTitle: string
   dueAt: string
 }
+

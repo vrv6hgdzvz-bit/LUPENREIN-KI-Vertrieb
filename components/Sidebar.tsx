@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 const items = [
-  ['⌂','Dashboard','/'], ['⌕','Lead-Finder','/lead-finder'], ['◎','Leads','/leads'], ['▦','Pipeline','/pipeline'], ['✉','Nachrichten','/messages'], ['✓','Aufgaben','/tasks'], ['▤','Besichtigungen','/surveys'], ['€','Angebote','/offers'], ['◆','Kunden','/customers'], ['↗','KPIs','/analytics'], ['◉','Betrieb & Agent','/operations'], ['⚙','Einstellungen','/settings']
+  ['⌂','Dashboard','/'], ['⌕','Lead-Finder','/lead-finder'], ['▧','Ausschreibungen','/tenders'], ['◈','Website-Besucher','/website-visitors'], ['◎','Leads','/leads'], ['▦','Pipeline','/pipeline'], ['◌','Kundenanfragen','/self-service-requests'], ['✉','Nachrichten','/messages'], ['✓','Aufgaben','/tasks'], ['▤','Besichtigungen','/surveys'], ['€','Angebote','/offers'], ['◆','Kunden','/customers'], ['↗','KPIs','/analytics'], ['◉','Betrieb & Agent','/operations'], ['⚙','Einstellungen','/settings']
 ]
 export function Sidebar(){
   return <aside className="sidebar">
@@ -11,3 +11,4 @@ export function Sidebar(){
     <div className="sidebarFoot">LUPENREIN Service GmbH<br/><span>Interne Vertriebssoftware</span></div>
   </aside>
 }
+

@@ -1,5 +1,6 @@
 import 'server-only'
 import {getAccessToken,getSupabaseUser} from './supabase'
+import {adminConfigured,adminRest,adminStorage} from './supabaseAdmin'
 
 const bucket='company-assets'
 const objectName='offer-letterhead'
@@ -18,8 +19,21 @@ async function auth(){
 
 export async function getLetterhead():Promise<LetterheadAsset|null>{
  if(!base()||!anon())return null
- const {user,token}=await auth()
- const r=await fetch(storageUrl(user.id),{headers:{apikey:anon(),Authorization:`Bearer ${token}`},cache:'no-store'})
+ let r:Response
+ try{
+  const {user,token}=await auth()
+  r=await fetch(storageUrl(user.id),{headers:{apikey:anon(),Authorization:`Bearer ${token}`},cache:'no-store'})
+ }catch{
+  if(!adminConfigured)return null
+  let ownerId=String(process.env.LETTERHEAD_OWNER_ID||'')
+  if(!ownerId){
+   const profiles=await adminRest('profiles?select=user_id&order=created_at.asc&limit=1')
+   if(!profiles.ok)return null
+   ownerId=String((await profiles.json() as Array<{user_id?:string}>)[0]?.user_id||'')
+  }
+  if(!ownerId)return null
+  r=await adminStorage(`object/${bucket}/${encodeURIComponent(ownerId)}/${objectName}`)
+ }
  if(r.status===404||r.status===400)return null
  if(!r.ok)throw new Error('Briefkopf konnte nicht geladen werden.')
  const bytes=new Uint8Array(await r.arrayBuffer())
@@ -55,3 +69,4 @@ export async function deleteLetterhead(){
  })
  if(!r.ok)throw new Error('Briefkopf konnte nicht entfernt werden.')
 }
+
